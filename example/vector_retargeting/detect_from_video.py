@@ -5,6 +5,8 @@ import cv2
 import tqdm
 import tyro
 
+import os; os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
 from dex_retargeting.constants import (
     RobotName,
     RetargetingType,
