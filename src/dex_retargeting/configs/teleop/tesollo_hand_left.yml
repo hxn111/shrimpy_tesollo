@@ -1,0 +1,16 @@
+retargeting:
+  type: vector
+  urdf_path: tesollo_hand/tesollo_hand_left.urdf
+
+  # Target refers to the retargeting target, which is the robot hand
+  # F1=thumb, F2=index, F3=middle
+  target_origin_link_names: [ "delto_base_link", "delto_base_link", "delto_base_link" ]
+  target_task_link_names: [ "F1_TIP", "F2_TIP", "F3_TIP" ]
+  scaling_factor: 1.5
+
+  # Source refers to the retargeting input, which usually corresponds to the human hand
+  # The joint indices of human hand joint which corresponds to each link in the target_link_names
+  target_link_human_indices: [ [ 0, 0, 0 ], [ 4, 8, 12 ] ]
+
+  # A smaller alpha means stronger filtering, i.e. more smooth but also larger latency
+  low_pass_alpha: 0.2
