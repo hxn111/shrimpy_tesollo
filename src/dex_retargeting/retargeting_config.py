@@ -52,6 +52,12 @@ class RetargetingConfig:
     # DexPilot optimizer parameters
     project_dist: float = 0.03
     escape_dist: float = 0.05
+    # eta1: minimum projected distance for thumb-adjacent finger pairs (e.g. F1-F2, F1-F3)
+    # Default 1e-4 works for real-thumb hands (Allegro), but causes penetration on Tesollo DG3F.
+    # Set to ~0.015 for Tesollo to maintain physical clearance between fingers.
+    eta1: float = 1e-4
+    # eta2: minimum projected distance for non-thumb finger pairs (e.g. F2-F3)
+    eta2: float = 3e-2
 
     # Joint limit tag
     has_joint_limits: bool = True
@@ -231,6 +237,8 @@ class RetargetingConfig:
                 scaling=self.scaling_factor,
                 project_dist=self.project_dist,
                 escape_dist=self.escape_dist,
+                eta1=self.eta1,
+                eta2=self.eta2,
             )
         else:
             raise RuntimeError()
