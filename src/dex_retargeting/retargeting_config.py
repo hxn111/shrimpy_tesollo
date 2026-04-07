@@ -153,7 +153,7 @@ class RetargetingConfig:
         config_path_str = str(config_path)
         if "sunny" in config_path_str:
             config_path_str = config_path_str.replace("sunny", "lenovo")
-            print(f"检测到错误的路径，已修正为: {config_path_str}")
+            print(f"Wrong path detected, auto corrected to: {config_path_str}")
         path = Path(config_path_str)
         
         if not path.is_absolute():
