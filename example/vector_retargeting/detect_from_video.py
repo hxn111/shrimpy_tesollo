@@ -2,6 +2,7 @@ import pickle
 from pathlib import Path
 
 import cv2
+import numpy as np
 import tqdm
 import tyro
 
@@ -37,7 +38,7 @@ def retarget_video(
                 if not ret:
                     break
 
-                rgb = frame[..., ::-1]
+                rgb = np.ascontiguousarray(frame[..., ::-1])
                 num_box, joint_pos, keypoint_2d, mediapipe_wrist_rot = detector.detect(
                     rgb
                 )
