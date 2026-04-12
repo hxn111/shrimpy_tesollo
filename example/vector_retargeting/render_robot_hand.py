@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Optional, List, Union, Dict
 
 import cv2
@@ -21,6 +21,7 @@ def render_by_sapien(
     output_video_path: Optional[str] = None,
     headless: Optional[bool] = False,
     use_ray_tracing: bool = False,
+    overwritten_pkl_path: Optional[str] = None,
 ):
     # Generate rendering config
     # use_rt is decoupled from headless: ray tracing requires Vulkan RT + OIDN,
@@ -38,6 +39,12 @@ def render_by_sapien(
 
     # Config is loaded only to find the urdf path and robot name
     config_path = meta_data["config_path"]
+    if overwritten_pkl_path:
+        # config_path from the pickle may be a Windows-style path (backslashes);
+        # PureWindowsPath correctly extracts the filename regardless of host OS.
+        config_filename = PureWindowsPath(config_path).name
+        config_path = Path(overwritten_pkl_path) / config_filename
+
     config = RetargetingConfig.load_from_file(config_path)
 
     # Setup
@@ -164,6 +171,7 @@ def main(
     output_video_path: Optional[str] = None,
     headless: bool = False,
     use_ray_tracing: bool = False,
+    overwritten_pkl_path: Optional[str] = None,
 ):
     """
     Loads the preserved robot pose data and renders it either on screen or as an mp4 video.
@@ -174,6 +182,7 @@ def main(
             By default, it is set to None, implying no video will be saved.
         headless: Run without GUI window. Use together with --output-video-path to save video.
         use_ray_tracing: Enable ray tracing renderer (requires Vulkan RT + OIDN). Defaults to False.
+        overwritten_pkl_path: (optional) Path to yml config file directory (overwrite one from pkl) 
     """
     robot_dir = (
         Path(__file__).absolute().parent.parent.parent / "assets" / "robots" / "hands"
@@ -183,7 +192,7 @@ def main(
     pickle_data = np.load(pickle_path, allow_pickle=True)
     meta_data, data = pickle_data["meta_data"], pickle_data["data"]
 
-    render_by_sapien(meta_data, data, output_video_path, headless, use_ray_tracing)
+    render_by_sapien(meta_data, data, output_video_path, headless, use_ray_tracing, overwritten_pkl_path)
 
 
 if __name__ == "__main__":

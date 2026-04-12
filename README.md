@@ -9,19 +9,26 @@ python3 -m venv shrimp-venv
 source shrimp-venv/bin/activate
 
 # Install dependencies
-pip install dex-retargeting
+pip install -e .
 cd example/vector_retargeting
 pip install -r requirements.txt
+pip install numpy==1.26.4  # Must be installed after everything in requirements.txt or causes issues (ignore red warning)
 ```
 
 # Running
-To generate pkl from the human video:
 ```bash
 cd example/vector_retargeting
+```
+
+To generate pkl from the human video:
+```bash
 python detect_from_video.py --robot-name tesollo --video-path data/human_hand_video.mp4 --retargeting-type dexpilot --hand-type left --output-path data/tesollo_joints.pkl
 ```
 
 To see the video:
-```
+```bash
 python render_robot_hand.py --pickle-path data/tesollo_joints.pkl --output-video-path data/test.mp4
+
+# Note, if you are rendering a pkl that you did not create, you will need to run:
+python render_robot_hand.py --pickle-path data/tesollo_joints.pkl --output-video-path data/test.mp4 --overwritten-pkl-path ../../src/dex_retargeting/configs/teleop
 ```
