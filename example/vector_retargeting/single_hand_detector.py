@@ -82,7 +82,10 @@ class SingleHandDetector:
         model_path = _ensure_model()
 
         options = mp_vision.HandLandmarkerOptions(
-            base_options=mp_python.BaseOptions(model_asset_path=model_path),
+            base_options=mp_python.BaseOptions(                                                                                                                                                                                                                                                                
+                model_asset_path=model_path,                                                                                                                                                                                                                                                                   
+                delegate=mp_python.BaseOptions.Delegate.GPU
+            ), 
             running_mode=mp_vision.RunningMode.IMAGE,
             num_hands=1,
             min_hand_detection_confidence=min_detection_confidence,

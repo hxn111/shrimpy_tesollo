@@ -5,6 +5,7 @@ mediapipe
 sapien
 dex_retargeting
 torch
+loguru
 
 # URDF visualizaion
 pyglet<2

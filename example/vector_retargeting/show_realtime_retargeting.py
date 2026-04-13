@@ -128,6 +128,11 @@ def start_retargeting(queue: multiprocessing.Queue, robot_dir: str, config_path:
             return
 
         _, joint_pos, keypoint_2d, _ = detector.detect(rgb)
+
+        # Pass if no keypoints detected
+        if keypoint_2d is None:
+            logger.warning("No keypoints detected.")
+            continue
         bgr = detector.draw_skeleton_on_image(bgr, keypoint_2d, style="default")
         cv2.imshow("realtime_retargeting_demo", bgr)
         if cv2.waitKey(1) & 0xFF == ord("q"):
@@ -148,8 +153,8 @@ def start_retargeting(queue: multiprocessing.Queue, robot_dir: str, config_path:
             qpos = retargeting.retarget(ref_value)
             robot.set_qpos(qpos[retargeting_to_sapien])
 
-        for _ in range(2):
-            viewer.render()
+
+        viewer.render()
 
 
 def produce_frame(queue: multiprocessing.Queue, camera_path: Optional[str] = None):
@@ -188,7 +193,8 @@ def main(
         Path(__file__).absolute().parent.parent.parent / "assets" / "robots" / "hands"
     )
 
-    queue = multiprocessing.Queue(maxsize=1000)
+    # queue = multiprocessing.Queue(maxsize=1000)
+    queue = multiprocessing.Queue(maxsize=10)
     producer_process = multiprocessing.Process(
         target=produce_frame, args=(queue, camera_path)
     )
