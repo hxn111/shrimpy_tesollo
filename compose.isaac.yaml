@@ -47,32 +47,32 @@ x-isaac-volumes: &isaac-volumes
 
   # Dex interface
   - type: bind
-    source: ./app
-    target: /workspace/app
-  - type: bind
-    source: ./libs
-    target: /workspace/libs
-  - type: bind
-    source: ./scripts
-    target: /workspace/scripts
+    source: ./
+    target: /workspace
+  # - type: bind
+  #   source: ./libs
+  #   target: /workspace/libs
+  # - type: bind
+  #   source: ./scripts
+  #   target: /workspace/scripts
 
   # Mask build files so they aren't copied into the volume
   - type: volume
-    target: /workspace/libs/robot_motion/build
+    target: /workspace/robot_motion/build
   - type: volume
-    target: /workspace/libs/robot_motion_interface/build
+    target: /workspace/robot_motion_interface/build
   - type: volume
-    target: /workspace/libs/robot_motion_interface/ros/build
+    target: /workspace/robot_motion_interface/ros/build
   - type: volume
-    target: /workspace/libs/robot_motion_interface/ros/install
+    target: /workspace/robot_motion_interface/ros/install
   - type: volume
-    target: /workspace/libs/robot_motion_interface/ros/log
-  - type: volume
-    target: /workspace/libs/primitives/ros/build
-  - type: volume
-    target: /workspace/libs/primitives/ros/install
-  - type: volume
-    target: /workspace/libs/primitives/ros/log
+    target: /workspace/robot_motion_interface/ros/log
+  # - type: volume
+  #   target: /workspace/libs/primitives/ros/build
+  # - type: volume
+  #   target: /workspace/libs/primitives/ros/install
+  # - type: volume
+  #   target: /workspace/libs/primitives/ros/log
 
     
 

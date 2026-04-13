@@ -39,7 +39,7 @@ def retarget_video(
                     break
 
                 rgb = np.ascontiguousarray(frame[..., ::-1])
-                num_box, joint_pos, keypoint_2d, mediapipe_wrist_rot = detector.detect(
+                num_box, joint_pos, keypoint_2d, mediapipe_wrist_rot,  _ = detector.detect(
                     rgb
                 )
                 if num_box == 0:

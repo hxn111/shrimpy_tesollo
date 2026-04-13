@@ -5,8 +5,8 @@ Tutorial: https://github.com/dexsuite/dex-retargeting/blob/main/example/vector_r
 # Setup
 ```bash
 # Setup virtual environment (bash):
-python3 -m venv shrimp-venv
-source shrimp-venv/bin/activate
+python3.11 -m venv shrimp-venv
+cd 
 
 # Install dependencies
 pip install -e .

@@ -132,7 +132,7 @@ def start_retargeting(queue: multiprocessing.Queue, robot_dir: str, config_path:
             )
             return
 
-        _, joint_pos, keypoint_2d, _ = detector.detect(rgb)
+        _, joint_pos, keypoint_2d, _, _ = detector.detect(rgb)
 
         # Pass if no keypoints detected
         if keypoint_2d is None:

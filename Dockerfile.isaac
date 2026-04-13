@@ -382,17 +382,18 @@ WORKDIR /workspace
 
 ############## C++ Installs and Python Installs ##############
 #### C++
-COPY ./libs /workspace/libs
-COPY ./app /workspace/app
+# COPY ./libs /workspace/libs
+# COPY ./app /workspace/app
+COPY ./ /workspace
 
-WORKDIR /workspace/libs/robot_motion
+WORKDIR /workspace/robot_motion
 RUN rm -rf build/ && \
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && \
     cmake --build build -j && \
     cmake --install build && \
     ldconfig
 
-WORKDIR /workspace/libs/robot_motion_interface
+WORKDIR /workspace/robot_motion_interface
 RUN rm -rf build/ && \
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release  && \
     cmake --build build -j && \
@@ -422,11 +423,11 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh  
     conda activate env_isaaclab && \
         pip install --force-reinstall setuptools==68.0.0 && \
         pip install colcon-common-extensions && \
-        pip install -e /workspace/libs/robot_motion && \
-        pip install -e /workspace/libs/robot_motion_interface && \
-        pip install -e /workspace/libs/sensor_interface/sensor_interface_py && \
-        pip install -e /workspace/libs/planning/planning_py && \
-        pip install -e /workspace/app/ui_backend && \
+        pip install -e /workspace/robot_motion && \
+        pip install -e /workspace/robot_motion_interface && \
+        # pip install -e /workspace/sensor_interface/sensor_interface_py && \
+        # pip install -e /workspace/planning/planning_py && \
+        # pip install -e /workspace/app/ui_backend && \
         pip install backports.tarfile more-itertools && \
         pip install numpy==1.26 && \
         /isaaclab/isaaclab.sh --install

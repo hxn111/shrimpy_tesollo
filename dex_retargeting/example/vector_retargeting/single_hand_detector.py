@@ -139,7 +139,7 @@ class SingleHandDetector:
         result = self.hand_detector.detect(mp_image)
 
         if not result.hand_world_landmarks:
-            return 0, None, None, None
+            return 0, None, None, None, None
 
         desired_hand_num = -1
         for i, handedness in enumerate(result.handedness):
@@ -149,7 +149,7 @@ class SingleHandDetector:
                 break
 
         if desired_hand_num < 0:
-            return 0, None, None, None
+            return 0, None, None, None, None
 
         keypoint_3d = result.hand_world_landmarks[desired_hand_num]
         keypoint_2d = result.hand_landmarks[desired_hand_num]
@@ -157,11 +157,11 @@ class SingleHandDetector:
 
         keypoint_3d_array = self.parse_keypoint_3d(keypoint_3d)
         print("KEYPOINTS:", keypoint_3d_array)
-        keypoint_3d_array = keypoint_3d_array - keypoint_3d_array[0:1, :]
-        mediapipe_wrist_rot = self.estimate_frame_from_hand_points(keypoint_3d_array)
-        joint_pos = keypoint_3d_array @ mediapipe_wrist_rot @ self.operator2mano
+        wrist_frame_keypoint_3d_array = keypoint_3d_array - keypoint_3d_array[0:1, :]
+        mediapipe_wrist_rot = self.estimate_frame_from_hand_points(wrist_frame_keypoint_3d_array)
+        joint_pos = wrist_frame_keypoint_3d_array @ mediapipe_wrist_rot @ self.operator2mano
 
-        return num_box, joint_pos, keypoint_2d, mediapipe_wrist_rot
+        return num_box, joint_pos, keypoint_2d, mediapipe_wrist_rot, keypoint_3d_array
 
     @staticmethod
     def parse_keypoint_3d(keypoint_3d) -> np.ndarray:
