@@ -61,6 +61,9 @@ def start_retargeting(queue: multiprocessing.Queue, robot_dir: str, config_path:
     )
     cam.set_local_pose(sapien.Pose([0.50, 0, 0.0], [0, 0, 0, -1]))
 
+
+    
+
     viewer = Viewer()
     viewer.set_scene(scene)
     viewer.control_window.show_origin_frame = False
@@ -73,6 +76,7 @@ def start_retargeting(queue: multiprocessing.Queue, robot_dir: str, config_path:
     filepath = Path(config.urdf_path)
     robot_name = filepath.stem
     loader.load_multiple_collisions_from_file = True
+
     if "ability" in robot_name:
         loader.scale = 1.5
     elif "dclaw" in robot_name:
@@ -87,6 +91,7 @@ def start_retargeting(queue: multiprocessing.Queue, robot_dir: str, config_path:
         loader.scale = 1.4
     elif "svh" in robot_name:
         loader.scale = 1.5
+
 
     if "glb" not in robot_name:
         filepath = str(filepath).replace(".urdf", "_glb.urdf")

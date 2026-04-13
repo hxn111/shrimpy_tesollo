@@ -35,6 +35,11 @@ python render_robot_hand.py --pickle-path data/tesollo_joints.pkl --output-video
 ```
 
 
+To run realtime visualization via webcam:
+```bash
+python3 show_realtime_retargeting.py --robot-name tesollo --retargeting-type dexpilot --hand-type right 
+```
+
 # Utils
 Visualizing URDF:
 ```bash
