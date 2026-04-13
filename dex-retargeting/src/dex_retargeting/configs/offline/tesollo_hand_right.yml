@@ -1,0 +1,15 @@
+retargeting:
+  type: position
+  urdf_path: tesollo_hand/tesollo_hand_left.urdf
+
+  # F1=thumb, F2=index, F3=middle
+  target_joint_names: null
+  target_link_names: [ "F1_TIP", "F2_TIP", "F3_TIP",
+                       "F1_03", "F2_03", "F3_03" ]
+
+  target_link_human_indices: [ 4, 8, 12, 3, 7, 11 ]
+  add_dummy_free_joint: True
+
+  # A smaller alpha means stronger filtering, i.e. more smooth but also larger latency
+  # 1 means no filter while 0 means not moving
+  low_pass_alpha: 1
