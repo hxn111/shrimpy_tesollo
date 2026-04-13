@@ -1,6 +1,6 @@
 retargeting:
   type: position
-  urdf_path: tesollo_hand/tesollo_hand_right.urdf
+  urdf_path: tesollo_hand/tesollo_hand_left.urdf
 
   # F1=thumb, F2=index, F3=middle
   target_joint_names: null

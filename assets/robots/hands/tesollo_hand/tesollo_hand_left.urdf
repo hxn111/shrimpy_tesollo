@@ -23,6 +23,16 @@
       <color rgba="1.0 1.0 1.0 1.0"/>
    </material>
 
+   <!-- Ghost links -->
+   <link name="wrist"></link>
+   <joint name = "wrist_joint" type = "fixed">
+      <origin xyz="0.0 -0.03 -0.05" rpy="0 0 -1.5708"/>
+      <parent link="delto_base_link"/>
+      <child link="wrist"/>
+      <axis xyz="0.0 0.0 1.0"/>
+   </joint>
+
+   <!-- Regular links -->
    <link name="delto_base_link">
 
       <inertial>
@@ -407,7 +417,7 @@
 
    </link>
 
-   <!--Joint -->
+   <!-- Regular Joints -->
 
    <joint name = "F1M1" type = "revolute">
       <origin xyz="0.0265 0.0 0.0" rpy="0 0 0"/>
@@ -484,7 +494,7 @@
       <origin xyz="0.0434 0.0 0.0" rpy="0 0 0"/>
       <parent link="F2_03"/>
       <child link="F2_04"/>
-      <axis xyz="0.0434 0.0 1.0"/>
+      <axis xyz="0.0 0.0 1.0"/>
       <limit effort="10.0" velocity="5.0" lower="-0.226893" upper="2.02458" />
       <dynamics damping="1.1" friction="1.1"/>
    </joint>

@@ -5,3 +5,7 @@ mediapipe
 sapien
 dex_retargeting
 torch
+
+# URDF visualizaion
+pyglet<2
+yourdfpy

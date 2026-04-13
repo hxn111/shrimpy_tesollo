@@ -30,9 +30,21 @@ class SeqRetargeting:
         self.joint_limits = joint_limits[self.optimizer.idx_pin2target]
 
         # Temporal information
-        self.last_qpos = joint_limits.mean(1)[self.optimizer.idx_pin2target].astype(
-            np.float32
-        )
+        # self.last_qpos = joint_limits.mean(1)[self.optimizer.idx_pin2target].astype(
+        #     np.float32
+        # )
+
+        # Temporal information
+        # Initialize to zero (open hand) clamped to joint limits, rather than the
+        # midpoint of limits — asymmetric limits (e.g. Tesollo) make the midpoint
+        # a significantly flexed pose which causes poor retargeting from frame 0.
+        target_limits = joint_limits[self.optimizer.idx_pin2target]
+        self.last_qpos = np.clip(
+            np.zeros(len(self.optimizer.idx_pin2target)),
+            target_limits[:, 0],
+            target_limits[:, 1],
+        ).astype(np.float32)
+
         self.accumulated_time = 0
         self.num_retargeting = 0
 
@@ -110,6 +122,10 @@ class SeqRetargeting:
         self.is_warm_started = True
 
     def retarget(self, ref_value, fixed_qpos=np.array([])):
+
+        # TODO: CHECK!
+        if len(fixed_qpos) == 0 and len(self.optimizer.idx_pin2fixed) > 0:
+            fixed_qpos = np.zeros(len(self.optimizer.idx_pin2fixed))
         tic = time.perf_counter()
 
         qpos = self.optimizer.retarget(

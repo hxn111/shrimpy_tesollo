@@ -20,9 +20,10 @@ pip install numpy==1.26.4  # Must be installed after everything in requirements.
 cd example/vector_retargeting
 ```
 
-To generate pkl from the human video:
+To generate pkl from the human video (run 1):
 ```bash
-python detect_from_video.py --robot-name tesollo --video-path data/human_hand_video.mp4 --retargeting-type dexpilot --hand-type left --output-path data/tesollo_joints.pkl
+# Right
+python detect_from_video.py --robot-name tesollo --video-path data/human_hand_video.mp4 --retargeting-type dexpilot --hand-type right --output-path data/tesollo_joints.pkl
 ```
 
 To see the video:
@@ -32,3 +33,15 @@ python render_robot_hand.py --pickle-path data/tesollo_joints.pkl --output-video
 # Note, if you are rendering a pkl that you did not create, you will need to run:
 python render_robot_hand.py --pickle-path data/tesollo_joints.pkl --output-video-path data/test.mp4 --overwritten-pkl-path ../../src/dex_retargeting/configs/teleop
 ```
+
+
+# Utils
+Visualizing URDF:
+```bash
+cd assets/robots/hands/tesollo_hand
+yourdfpy ./tesollo_hand_left.urdf
+```
+
+You can use these keys in the urdf viewer:
+* a: Toggle rendered XYZ/RGB axis markers (off, world frame, every frame)
+* w: Toggle wireframe mode (good for looking inside meshes, off by default)

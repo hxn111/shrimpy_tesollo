@@ -23,6 +23,8 @@
       <color rgba="1.0 1.0 1.0 1.0"/>
    </material>
 
+
+
    <link name="delto_base_link">
 
       <inertial>
