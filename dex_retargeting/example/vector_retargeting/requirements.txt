@@ -3,7 +3,6 @@ tqdm
 tyro
 mediapipe
 sapien
-dex_retargeting
 torch
 loguru
 

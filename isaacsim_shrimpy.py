@@ -17,7 +17,7 @@ from loguru import logger
 
 
 HAND_TYPE ="Right"
-CAMERA_PATH = 6
+CAMERA_PATH = None
 
 def retargeting(queue: multiprocessing.Queue):
     detector = SingleHandDetector(hand_type=HAND_TYPE, selfie=False)

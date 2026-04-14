@@ -156,7 +156,6 @@ class SingleHandDetector:
         num_box = len(result.hand_landmarks)
 
         keypoint_3d_array = self.parse_keypoint_3d(keypoint_3d)
-        print("KEYPOINTS:", keypoint_3d_array)
         wrist_frame_keypoint_3d_array = keypoint_3d_array - keypoint_3d_array[0:1, :]
         mediapipe_wrist_rot = self.estimate_frame_from_hand_points(wrist_frame_keypoint_3d_array)
         joint_pos = wrist_frame_keypoint_3d_array @ mediapipe_wrist_rot @ self.operator2mano
