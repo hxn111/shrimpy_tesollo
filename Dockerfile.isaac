@@ -429,7 +429,7 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh  
         pip install backports.tarfile more-itertools && \
         pip install -r /workspace/dex_retargeting/example/vector_retargeting/requirements.txt && \
         pip install numpy==1.26 && \
-        pip uninstall opencv-python-headless & \
+        pip uninstall -y opencv-python-headless && \
         /isaaclab/isaaclab.sh --install
 
 

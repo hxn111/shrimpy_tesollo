@@ -3,8 +3,8 @@ TODO
 """
 
 from dex_retargeting.example.vector_retargeting.single_hand_detector import SingleHandDetector
-# from robot_motion_interface.isaacsim.isaacsim_interface import IsaacsimInterface
-
+from robot_motion_interface.isaacsim.isaacsim_interface import IsaacsimInterface
+from robot_motion_interface.interface import Interface
 from typing import Optional
 import time
 import multiprocessing
@@ -14,13 +14,19 @@ import numpy as np
 import cv2
 from queue import Empty
 from loguru import logger
+from enum import Enum
+
+class Hand(Enum):
+    RIGHT = "Right"
+    LEFT = "Left"
+    
+
+def scale_and_set_wrist_pose(hand:Hand, unscaled_wrist_pose:np.ndarray, robot_interface:Interface):
+    pass
 
 
-HAND_TYPE ="Right"
-CAMERA_PATH = None
-
-def retargeting(queue: multiprocessing.Queue):
-    detector = SingleHandDetector(hand_type=HAND_TYPE, selfie=False)
+def retargeting(queue: multiprocessing.Queue, hand:Hand, robot_interface:Interface):
+    detector = SingleHandDetector(hand_type=hand.value, selfie=False)
     while True:
         try:
             bgr = queue.get(timeout=5)
@@ -33,6 +39,9 @@ def retargeting(queue: multiprocessing.Queue):
             # return
 
         num_box, joint_pos, keypoint_2d, mediapipe_wrist_rot, keypoint_3d_array = detector.detect(rgb)
+
+        wrist_pose = np.array(keypoint_3d_array + [0.707, 0.707, 0, 0])
+        scale_and_set_wrist_pose(hand, wrist_pose, robot_interface)
 
         # Pass if no keypoints detected
         if keypoint_2d is not None:
@@ -57,32 +66,39 @@ def produce_frame(queue: multiprocessing.Queue, camera_path: Optional[str] = Non
         queue.put(image)
 
 
-def start_threading():
+def start_threading(interface_config_path, hand_type, camera_path):
     queue = multiprocessing.Queue(maxsize=10)
     producer_process = multiprocessing.Process(
-        target=produce_frame, args=(queue, CAMERA_PATH)
+        target=produce_frame, args=(queue, camera_path)
     )
     consumer_process = multiprocessing.Process(
-        target=retargeting, args=(queue,)
+        target=retargeting, args=(queue, hand_type, robot_interface)
     )
+
 
     producer_process.start()
     consumer_process.start()
+
+    # Needs to be in "main" thread
+    robot_interface = IsaacsimInterface.from_yaml(interface_config_path)
+    robot_interface.start_loop()
 
     producer_process.join()
     consumer_process.join()
 
 def main():
     """
-    Simple example of static bimanual arms in Isaacsim, solved with 
-    cartesian IK.
+    TODO
     """
-    config_dir = Path(__file__).resolve().parents[0] / "robot_motion_interface" / "config"
-    config_path = config_dir / "isaacsim_config.yaml"
+    CONFIG_DIR = Path(__file__).resolve().parents[0] / "robot_motion_interface" / "config"
+    CONFIG_PATH = CONFIG_DIR / "isaacsim_config.yaml"
 
-    start_threading()
+    HAND_TYPE = Hand.RIGHT
+    CAMERA_PATH = None
 
-    # isaac = IsaacsimInterface.from_yaml(config_path)
+    start_threading(CONFIG_PATH, HAND_TYPE, CAMERA_PATH)
+
+    # 
 
     # wrist_goal_left = np.array([-0.2, 0.2, 1.4, 0.707, 0.707, 0, 0])
     # wrist_goal_right = np.array([0.2, 0.2, 1.4, 0.707, 0.707, 0, 0])
@@ -90,7 +106,7 @@ def main():
     # x = [wrist_goal_left, wrist_goal_right]
     # isaac.set_cartesian_pose(x, ['left_delto_offset_link', 'right_delto_offset_link'])
 
-    # isaac.start_loop()
+    # 
 
 
 if __name__ == "__main__":
