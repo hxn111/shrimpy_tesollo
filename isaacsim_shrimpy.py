@@ -40,13 +40,16 @@ def retargeting(queue: multiprocessing.Queue, hand:Hand, robot_interface:Interfa
 
         num_box, joint_pos, keypoint_2d, mediapipe_wrist_rot, keypoint_3d_array = detector.detect(rgb)
 
-        wrist_pose = np.array(keypoint_3d_array + [0.707, 0.707, 0, 0])
-        scale_and_set_wrist_pose(hand, wrist_pose, robot_interface)
-
+        
         # Pass if no keypoints detected
         if keypoint_2d is not None:
-            logger.warning("No keypoints detected.")
+
             bgr = detector.draw_skeleton_on_image(bgr, keypoint_2d, style="default")
+
+            wrist_pose = np.concatenate([keypoint_3d_array[0], np.array([0.707, 0.707, 0, 0]) ])
+            scale_and_set_wrist_pose(hand, wrist_pose, robot_interface)
+        else:
+            logger.warning("No keypoints detected.")
         
         cv2.imshow("realtime_retargeting_demo", bgr)
         if cv2.waitKey(1) & 0xFF == ord("q"):
@@ -67,23 +70,23 @@ def produce_frame(queue: multiprocessing.Queue, camera_path: Optional[str] = Non
 
 
 def start_threading(robot_interface, hand_type, camera_path):
-    # queue = multiprocessing.Queue(maxsize=10)
-    # producer_process = multiprocessing.Process(
-    #     target=produce_frame, args=(queue, camera_path)
-    # )
-    # consumer_process = multiprocessing.Process(
-    #     target=retargeting, args=(queue, hand_type, robot_interface)
-    # )
+    queue = multiprocessing.Queue(maxsize=10)
+    producer_process = multiprocessing.Process(
+        target=produce_frame, args=(queue, camera_path)
+    )
+    consumer_process = multiprocessing.Process(
+        target=retargeting, args=(queue, hand_type, robot_interface)
+    )
 
 
-    # producer_process.start()
-    # consumer_process.start()
+    producer_process.start()
+    consumer_process.start()
 
     # Needs to be in "main" thread
-    robot_interface.start_loop()
+    # robot_interface.start_loop()
 
-    # producer_process.join()
-    # consumer_process.join()
+    producer_process.join()
+    consumer_process.join()
 
 def main():
     """
@@ -93,9 +96,10 @@ def main():
     CONFIG_PATH = CONFIG_DIR / "isaacsim_config.yaml"
 
     HAND_TYPE = Hand.RIGHT
-    CAMERA_PATH = None
+    CAMERA_PATH = 1
 
-    robot_interface = IsaacsimInterface.from_yaml(CONFIG_PATH)
+    # robot_interface = IsaacsimInterface.from_yaml(CONFIG_PATH)
+    robot_interface = None
 
     start_threading(robot_interface, HAND_TYPE, CAMERA_PATH)
 

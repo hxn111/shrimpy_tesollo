@@ -51,6 +51,7 @@ NOTE: if you need to start another terminal, once the container is started, run 
 
 ## Sim Testing
 ```bash
+pip uninstall -y opencv-python-headless # Required for cv2 to run in docker
 python3 isaacsim_shrimpy.py
 ```
 
@@ -76,6 +77,7 @@ python render_robot_hand.py --pickle-path data/tesollo_joints.pkl --output-video
 
 To run realtime visualization via webcam:
 ```bash
+
 python3 show_realtime_retargeting.py --robot-name tesollo --retargeting-type dexpilot --hand-type right 
 ```
 
