@@ -264,9 +264,9 @@ RUN mkdir -p ${ROS_ROOT}/src && \
         geometry_msgs nav_msgs std_msgs rosgraph_msgs sensor_msgs vision_msgs rclpy ros2topic ros2pkg \ 
         ros2cli ros2action ros2param ros2service \
         launch launch_ros ros2launch \
-        ros2doctor ros2run ros2node ros_environment ackermann_msgs example_interfaces > ros2.${ROS_DISTRO}.${ROS_PKG}.rosinstall && \
-    cat ros2.${ROS_DISTRO}.${ROS_PKG}.rosinstall && \
-    vcs import src < ros2.${ROS_DISTRO}.${ROS_PKG}.rosinstall
+        ros2doctor ros2run ros2node ros_environment ackermann_msgs example_interfaces > ros2.${ROS_DISTRO}.rosinstall && \
+    cat ros2.${ROS_DISTRO}.rosinstall && \
+    vcs import src < ros2.${ROS_DISTRO}.rosinstall
 
 # Patch rclpy to ensure it builds with Python 3.11 - find the correct path first
 RUN find ${ROS_ROOT}/src -name rclpy -type d | xargs -I{} /bin/bash -c 'if [ -f {}/CMakeLists.txt ]; then \
@@ -429,7 +429,6 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh  
         pip install backports.tarfile more-itertools && \
         pip install -r /workspace/dex_retargeting/example/vector_retargeting/requirements.txt && \
         pip install numpy==1.26 && \
-        pip uninstall -y opencv-python-headless && \
         /isaaclab/isaaclab.sh --install
 
 

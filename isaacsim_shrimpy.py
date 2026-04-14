@@ -66,25 +66,24 @@ def produce_frame(queue: multiprocessing.Queue, camera_path: Optional[str] = Non
         queue.put(image)
 
 
-def start_threading(interface_config_path, hand_type, camera_path):
-    queue = multiprocessing.Queue(maxsize=10)
-    producer_process = multiprocessing.Process(
-        target=produce_frame, args=(queue, camera_path)
-    )
-    consumer_process = multiprocessing.Process(
-        target=retargeting, args=(queue, hand_type, robot_interface)
-    )
+def start_threading(robot_interface, hand_type, camera_path):
+    # queue = multiprocessing.Queue(maxsize=10)
+    # producer_process = multiprocessing.Process(
+    #     target=produce_frame, args=(queue, camera_path)
+    # )
+    # consumer_process = multiprocessing.Process(
+    #     target=retargeting, args=(queue, hand_type, robot_interface)
+    # )
 
 
-    producer_process.start()
-    consumer_process.start()
+    # producer_process.start()
+    # consumer_process.start()
 
     # Needs to be in "main" thread
-    robot_interface = IsaacsimInterface.from_yaml(interface_config_path)
     robot_interface.start_loop()
 
-    producer_process.join()
-    consumer_process.join()
+    # producer_process.join()
+    # consumer_process.join()
 
 def main():
     """
@@ -96,7 +95,9 @@ def main():
     HAND_TYPE = Hand.RIGHT
     CAMERA_PATH = None
 
-    start_threading(CONFIG_PATH, HAND_TYPE, CAMERA_PATH)
+    robot_interface = IsaacsimInterface.from_yaml(CONFIG_PATH)
+
+    start_threading(robot_interface, HAND_TYPE, CAMERA_PATH)
 
     # 
 
