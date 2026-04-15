@@ -159,6 +159,7 @@ class IsaacsimInterface(Interface):
                 achieves the target. If False, returns after queuing the request.
         """
         q = self._partial_to_full_joint_positions(q, joint_names)
+
               
         if self._joint_positions is not None:
             self._joint_positions[:] = torch.tensor(

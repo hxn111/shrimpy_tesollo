@@ -51,7 +51,6 @@ NOTE: if you need to start another terminal, once the container is started, run 
 
 ## Sim Testing
 ```bash
-pip uninstall -y opencv-python-headless # Required for cv2 to run in docker
 python3 isaacsim_shrimpy.py
 ```
 

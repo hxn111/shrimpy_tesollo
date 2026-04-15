@@ -7,11 +7,14 @@ from robot_motion_interface.isaacsim.isaacsim_interface import IsaacsimInterface
 from robot_motion_interface.interface import Interface
 from typing import Optional
 import time
-import multiprocessing
+import threading
+import queue
+import signal
 
 from pathlib import Path
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
 from queue import Empty
 from loguru import logger
 from enum import Enum
@@ -22,14 +25,24 @@ class Hand(Enum):
     
 
 def scale_and_set_wrist_pose(hand:Hand, unscaled_wrist_pose:np.ndarray, robot_interface:Interface):
-    pass
+    # DEFAULT_WRIST_GOAL_LEFT = np.array([-0.2, 0.2, 1.4, 0.707, 0.707, 0, 0])
+    # DEFAULT_WRIST_GOAL_RIGHT = np.array([0.2, 0.2, 1.4, 0.707, 0.707, 0, 0])
+    scaled_wrist_pose = unscaled_wrist_pose 
+
+    scaled_wrist_pose[:3] *= 5
+    scaled_wrist_pose[2]+= 1.2 # Add 1.2 meters to z
+    if hand == Hand.RIGHT:
+        print(scaled_wrist_pose)
+        robot_interface.set_cartesian_pose([scaled_wrist_pose], ['right_delto_offset_link'])
+    elif hand == Hand.LEFT:
+        robot_interface.set_cartesian_pose([scaled_wrist_pose], ['left_delto_offset_link'])
 
 
-def retargeting(queue: multiprocessing.Queue, hand:Hand, robot_interface:Interface):
+def retargeting(frame_queue: queue.Queue,stop_event,  hand:Hand, robot_interface:Interface):
     detector = SingleHandDetector(hand_type=hand.value, selfie=False)
-    while True:
+    while not stop_event.is_set():
         try:
-            bgr = queue.get(timeout=5)
+            bgr = frame_queue.get(timeout=5)
             rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
         except Empty:
             logger.error(
@@ -47,46 +60,69 @@ def retargeting(queue: multiprocessing.Queue, hand:Hand, robot_interface:Interfa
             bgr = detector.draw_skeleton_on_image(bgr, keypoint_2d, style="default")
 
             wrist_pose = np.concatenate([keypoint_3d_array[0], np.array([0.707, 0.707, 0, 0]) ])
+            
             scale_and_set_wrist_pose(hand, wrist_pose, robot_interface)
         else:
-            logger.warning("No keypoints detected.")
+            # logger.warning("No keypoints detected.")
+            pass
         
-        cv2.imshow("realtime_retargeting_demo", bgr)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+        # This requires uninstalling opencv-python-headless but that is incompatible with Isaacsim
+        # cv2.imshow("realtime_retargeting_demo", bgr)
+        # if cv2.waitKey(1) & 0xFF == ord("q"):
+        #     break
 
-def produce_frame(queue: multiprocessing.Queue, camera_path: Optional[str] = None):
+        # Instead use matplotlib (SUPER SLOW)
+        # plt.imshow(bgr)
+        # plt.title("realtime_retargeting_demo")
+        # plt.axis("off")
+        # plt.pause(0.001)
+
+
+def produce_frame(frame_queue: queue.Queue, stop_event, camera_path: Optional[str] = None):
     if camera_path is None:
         cap = cv2.VideoCapture(0)
     else:
         cap = cv2.VideoCapture(camera_path)
 
-    while cap.isOpened():
+    while cap.isOpened() and not stop_event.is_set():
         success, image = cap.read()
         time.sleep(1 / 30.0)
         if not success:
             continue
-        queue.put(image)
+        frame_queue.put(image)
+    
+    cap.release()
+
 
 
 def start_threading(robot_interface, hand_type, camera_path):
-    queue = multiprocessing.Queue(maxsize=10)
-    producer_process = multiprocessing.Process(
-        target=produce_frame, args=(queue, camera_path)
+    stop_event = threading.Event()
+    
+    frame_queue = queue.Queue(maxsize=10)
+    producer_process = threading.Thread(
+        target=produce_frame, args=(frame_queue, stop_event, camera_path)
     )
-    consumer_process = multiprocessing.Process(
-        target=retargeting, args=(queue, hand_type, robot_interface)
+    consumer_process = threading.Thread(
+        target=retargeting, args=(frame_queue, stop_event, hand_type, robot_interface)
     )
 
 
     producer_process.start()
     consumer_process.start()
 
-    # Needs to be in "main" thread
-    # robot_interface.start_loop()
+    def handle_sigint(signum, frame):
+        print("Shutting down...")
+        stop_event.set()
+        robot_interface.stop()
+        
+    signal.signal(signal.SIGINT, handle_sigint)
+    # Needs to be in main thread
+    robot_interface.start_loop()
+
 
     producer_process.join()
     consumer_process.join()
+
 
 def main():
     """
@@ -98,8 +134,8 @@ def main():
     HAND_TYPE = Hand.RIGHT
     CAMERA_PATH = 1
 
-    # robot_interface = IsaacsimInterface.from_yaml(CONFIG_PATH)
-    robot_interface = None
+    robot_interface = IsaacsimInterface.from_yaml(CONFIG_PATH)
+    # robot_interface = None
 
     start_threading(robot_interface, HAND_TYPE, CAMERA_PATH)
 
@@ -115,5 +151,5 @@ def main():
 
 
 if __name__ == "__main__":
-   
+    # multiprocessing.set_start_method("spawn", force=True)
     main()
