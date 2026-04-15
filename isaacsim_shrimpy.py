@@ -23,16 +23,21 @@ class Hand(Enum):
     RIGHT = "Right"
     LEFT = "Left"
     
-
+#  Assume camera is on table facing up!
 def scale_and_set_wrist_pose(hand:Hand, unscaled_wrist_pose:np.ndarray, robot_interface:Interface):
     # DEFAULT_WRIST_GOAL_LEFT = np.array([-0.2, 0.2, 1.4, 0.707, 0.707, 0, 0])
     # DEFAULT_WRIST_GOAL_RIGHT = np.array([0.2, 0.2, 1.4, 0.707, 0.707, 0, 0])
-    scaled_wrist_pose = unscaled_wrist_pose 
 
-    scaled_wrist_pose[:3] *= 5
-    scaled_wrist_pose[2]+= 1.2 # Add 1.2 meters to z
+    print("ORIGINAL", unscaled_wrist_pose)
+    scaled_wrist_pose = unscaled_wrist_pose.copy()
+
+
     if hand == Hand.RIGHT:
-        print(scaled_wrist_pose)
+        scaled_wrist_pose[0] = scaled_wrist_pose[0] * 10 + 0.3
+        scaled_wrist_pose[1] *= -10
+        scaled_wrist_pose[2] = scaled_wrist_pose[2] * 20  - 0.4 # + 0.2 # Add 1.2 meters to z
+
+        print("SCALED", scaled_wrist_pose)
         robot_interface.set_cartesian_pose([scaled_wrist_pose], ['right_delto_offset_link'])
     elif hand == Hand.LEFT:
         robot_interface.set_cartesian_pose([scaled_wrist_pose], ['left_delto_offset_link'])
@@ -58,8 +63,9 @@ def retargeting(frame_queue: queue.Queue,stop_event,  hand:Hand, robot_interface
         if keypoint_2d is not None:
 
             bgr = detector.draw_skeleton_on_image(bgr, keypoint_2d, style="default")
-
-            wrist_pose = np.concatenate([keypoint_3d_array[0], np.array([0.707, 0.707, 0, 0]) ])
+            xyz_cam = keypoint_3d_array[0]
+            xyz = np.array([xyz_cam[0], xyz_cam[2], xyz_cam[1]]) # robot frame (x right, y forward, z up)
+            wrist_pose = np.concatenate([xyz, np.array([0.707, 0.707, 0, 0]) ])
             
             scale_and_set_wrist_pose(hand, wrist_pose, robot_interface)
         else:
