@@ -138,7 +138,7 @@ def main():
     CONFIG_PATH = CONFIG_DIR / "isaacsim_config.yaml"
 
     HAND_TYPE = Hand.RIGHT
-    CAMERA_PATH = 1
+    CAMERA_PATH = 0
 
     robot_interface = IsaacsimInterface.from_yaml(CONFIG_PATH)
     # robot_interface = None
