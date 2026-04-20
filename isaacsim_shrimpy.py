@@ -40,8 +40,8 @@ def scale_and_set_poses(hand:Hand, unscaled_wrist_pose:np.ndarray, gripper_pos:n
 
 
     if hand == Hand.RIGHT:
-        scaled_wrist_pose[0] = scaled_wrist_pose[0] * 8 + 0.3
-        scaled_wrist_pose[1] *= -8
+        scaled_wrist_pose[0] = -scaled_wrist_pose[0] * 1.5 + 0.5
+        scaled_wrist_pose[1] *= -2 + 1.5
         # scaled_wrist_pose[2] = scaled_wrist_pose[2] * 20  - 0.4 
         scaled_wrist_pose[2] = 1.3
         
@@ -112,8 +112,8 @@ def retargeting(frame_queue: queue.Queue,stop_event, hand:Hand, robot_interface:
         if keypoint_2d is not None:
 
             bgr = detector.draw_skeleton_on_image(bgr, keypoint_2d, style="default")
-            xyz_cam = keypoint_3d_array[0]
-            xyz = np.array([xyz_cam[0], xyz_cam[2], xyz_cam[1]]) # robot frame (x right, y forward, z up)
+            xy_cam = keypoint_2d[0]
+            xyz = np.array([xy_cam.x, xy_cam.y, 0]) # robot frame (x right, y forward, z up)
             wrist_pose = np.concatenate([xyz, np.array([0.707, 0.707, 0, 0]) ])
             gripper_pos = joint_pos_to_robot_pos(joint_pos, retargeter)
             scale_and_set_poses(hand, wrist_pose, gripper_pos, robot_interface, wrist_filters)
