@@ -15,10 +15,12 @@ import threading
 import queue
 import signal
 
+from OneEuroFilter import OneEuroFilter
 from pathlib import Path
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
+import pygame
 from queue import Empty
 from loguru import logger
 from enum import Enum
@@ -28,7 +30,8 @@ class Hand(Enum):
     LEFT = "Left"
     
 #  Assume camera is on table facing up!
-def scale_and_set_poses(hand:Hand, unscaled_wrist_pose:np.ndarray, gripper_pos:np.ndarray, robot_interface:Interface):
+def scale_and_set_poses(hand:Hand, unscaled_wrist_pose:np.ndarray, gripper_pos:np.ndarray, robot_interface:Interface,
+                        wrist_filter):
     # DEFAULT_WRIST_GOAL_LEFT = np.array([-0.2, 0.2, 1.4, 0.707, 0.707, 0, 0])
     # DEFAULT_WRIST_GOAL_RIGHT = np.array([0.2, 0.2, 1.4, 0.707, 0.707, 0, 0])
 
@@ -37,10 +40,13 @@ def scale_and_set_poses(hand:Hand, unscaled_wrist_pose:np.ndarray, gripper_pos:n
 
 
     if hand == Hand.RIGHT:
-        scaled_wrist_pose[0] = scaled_wrist_pose[0] * 10 + 0.3
-        scaled_wrist_pose[1] *= -10
-        scaled_wrist_pose[2] = scaled_wrist_pose[2] * 20  - 0.4 # + 0.2 # Add 1.2 meters to z
-
+        scaled_wrist_pose[0] = scaled_wrist_pose[0] * 8 + 0.3
+        scaled_wrist_pose[1] *= -8
+        # scaled_wrist_pose[2] = scaled_wrist_pose[2] * 20  - 0.4 
+        scaled_wrist_pose[2] = 1.3
+        
+        filtered_wrist_xyz = np.array([f(v) for f, v in zip(wrist_filter, scaled_wrist_pose[:3])])
+        scaled_wrist_pose[:3] = filtered_wrist_xyz
         print("SCALED", scaled_wrist_pose)
         print("Gripper positions", gripper_pos)
         if robot_interface:
@@ -75,6 +81,19 @@ def retargeting(frame_queue: queue.Queue,stop_event, hand:Hand, robot_interface:
     detector = SingleHandDetector(hand_type=hand.value, selfie=False)
     RetargetingConfig.set_default_urdf_dir(str(urdf_path))
     retargeter = RetargetingConfig.load_from_file(config_path).build()
+    
+    filter_config = {
+    'freq': 30,       # Hz (match camera FPS)
+    'mincutoff': 0.6,  # Hz
+    'beta': 0.3,  
+    }
+
+    wrist_filters = [OneEuroFilter(**filter_config) for _ in range(3)]
+
+    pygame.init()
+    screen = pygame.display.set_mode((640, 480))
+
+
     while not stop_event.is_set():
         try:
             bgr = frame_queue.get(timeout=5)
@@ -97,21 +116,17 @@ def retargeting(frame_queue: queue.Queue,stop_event, hand:Hand, robot_interface:
             xyz = np.array([xyz_cam[0], xyz_cam[2], xyz_cam[1]]) # robot frame (x right, y forward, z up)
             wrist_pose = np.concatenate([xyz, np.array([0.707, 0.707, 0, 0]) ])
             gripper_pos = joint_pos_to_robot_pos(joint_pos, retargeter)
-            scale_and_set_poses(hand, wrist_pose, gripper_pos, robot_interface)
+            scale_and_set_poses(hand, wrist_pose, gripper_pos, robot_interface, wrist_filters)
         else:
             # logger.warning("No keypoints detected.")
             pass
         
-        # This requires uninstalling opencv-python-headless but that is incompatible with Isaacsim
-        # cv2.imshow("realtime_retargeting_demo", bgr)
-        # if cv2.waitKey(1) & 0xFF == ord("q"):
-        #     break
-
-        # Instead use matplotlib (SUPER SLOW)
-        # plt.imshow(bgr)
-        # plt.title("realtime_retargeting_demo")
-        # plt.axis("off")
-        # plt.pause(0.001)
+        # cv2.imshow requires uninstalling opencv-python-headless but that is incompatible with Isaacsim
+        # Instead use pygame
+        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+        surf = pygame.surfarray.make_surface(rgb.swapaxes(0, 1))
+        screen.blit(surf, (0, 0))
+        pygame.display.flip()
 
 
 def produce_frame(frame_queue: queue.Queue, stop_event, camera_path: Optional[str] = None):
