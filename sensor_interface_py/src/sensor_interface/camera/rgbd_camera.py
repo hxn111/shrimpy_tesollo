@@ -178,19 +178,107 @@ class RGBDCameraInterface:
 
     ################################# Utils #################################
 
-    def depth_to_pointcloud(self, depth: np.ndarray) -> np.ndarray:
-        """
-        Convert a depth image into a point cloud in the depth optical frame
-        using the current depth intrinsics.
 
-        Args:
-            depth (np.ndarray): (H, W) float32 depth in meters.
+    def depth_to_pointcloud(self, depth: np.ndarray, mask: np.ndarray,
+            T_world_color:np.ndarray = None) -> tuple[np.ndarray, list[str | int]]:
+            """
+            Extract point clouds from a depth map filtered with mask.
 
-        Returns:
-            np.ndarray: (N, 3) float32 XYZ points in meters, where N = H*W or a
-           
-                filtered subset if the implementation skips invalid pixels.
-        """
+            Args:
+                depth (np.ndarray): (H, W) depth map in meters.
+                mask (np.ndarray): (H, W)  mask whose pixel values store indices (0, 1, 2, ...).
+                    For example, indices can represent objects (with 0 for background).
+                T_world_color (np.ndarray): (4, 4) homogeneous transform that maps points
+                    from the color optical frame into the world optical frame (meters). Defaults
+                    to identity matrix (no transform).
+            Returns:
+                (np.ndarray): (num_indices, N, 3) Array of object point clouds
+                (list[str | int]): num_indices) List of mask indices, in same order as point clouds
+            """
+            if T_world_color is None:
+                T_world_color = np.eye(4)
 
-        # TODO: Implement this since this is camera independent
-        ...
+            if depth.ndim != 2:
+                raise ValueError("`depth` must be a 2-D array")
+            if mask.ndim != 2:
+                raise ValueError("`mask` must be a 2-D array")
+
+            depth = depth.astype(np.float32, copy=False)
+            mask = mask.astype(np.int32, copy=False)
+            mask_indices = np.unique(mask)
+
+            depth_intr = self.depth_intrinsics
+            color_intr = self.color_intrinsics
+            H_d, W_d = depth.shape
+            H_c, W_c = mask.shape
+
+            if (depth_intr.width, depth_intr.height) != (W_d, H_d):
+                raise ValueError("Depth intrinsics do not match the depth image dimensions")
+            if (color_intr.width, color_intr.height) != (W_c, H_c):
+                raise ValueError("Color intrinsics do not match the semantic mask dimensions")
+
+            v_coords, u_coords = np.indices((H_d, W_d), dtype=np.float32)
+            z = depth.reshape(-1)
+            valid_depth = np.isfinite(z) & (z > 0)
+
+            EMPTY_POINTCLOUD_ARRAY = np.array([np.empty((0, 3), dtype=np.float32) for _ in mask_indices], dtype=object)
+            if not np.any(valid_depth):
+                return EMPTY_POINTCLOUD_ARRAY, mask_indices
+
+            u_flat = u_coords.reshape(-1)
+            v_flat = v_coords.reshape(-1)
+
+            x = (u_flat - depth_intr.cx) * z / depth_intr.fx
+            y = (v_flat - depth_intr.cy) * z / depth_intr.fy
+
+            ones = np.ones_like(z)
+            pts_depth = np.stack((x, y, z, ones), axis=0)
+
+
+            pts_color = self.T_color_depth @ pts_depth[:, valid_depth]
+            Z_c = pts_color[2]
+
+            # Return if all points are behind the camera
+            positive_mask = Z_c > 0
+            if not np.any(positive_mask):
+                return EMPTY_POINTCLOUD_ARRAY, mask_indices
+
+            
+            pts_color = pts_color[:, positive_mask]
+
+            u_proj = (pts_color[0] * color_intr.fx) / pts_color[2] + color_intr.cx
+            v_proj = (pts_color[1] * color_intr.fy) / pts_color[2] + color_intr.cy
+
+            u_int = np.rint(u_proj).astype(int)
+            v_int = np.rint(v_proj).astype(int)
+
+            inside_mask = (
+                (u_int >= 0)
+                & (u_int < W_c)
+                & (v_int >= 0)
+                & (v_int < H_c)
+            )
+
+            if not np.any(inside_mask):
+                return EMPTY_POINTCLOUD_ARRAY, mask_indices
+
+            u_int = u_int[inside_mask]
+            v_int = v_int[inside_mask]
+
+            pts_color = pts_color[:, inside_mask]
+
+            point_mask_values = mask[v_int, u_int]
+
+            pts_world = T_world_color @ pts_color
+            pts_world_cart = pts_world[:3].T.astype(np.float32, copy=False)
+
+            point_clouds: list[np.ndarray] = []
+            for mask_id in mask_indices:
+                selection = point_mask_values == mask_id
+                if not np.any(selection):
+                    point_clouds.append(np.empty((0, 3), dtype=np.float32))
+                else:
+                    point_clouds.append(pts_world_cart[selection])
+
+            point_cloud_array = np.array(point_clouds, dtype=object)
+            return point_cloud_array, mask_indices

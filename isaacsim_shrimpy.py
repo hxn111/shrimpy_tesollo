@@ -40,12 +40,11 @@ def scale_and_set_poses(hand:Hand, unscaled_wrist_pose:np.ndarray, gripper_pos:n
     print("ORIGINAL", unscaled_wrist_pose)
     scaled_wrist_pose = unscaled_wrist_pose.copy()
 
-
+    # x right, y forward, z up
     if hand == Hand.RIGHT:
-        scaled_wrist_pose[0] = -scaled_wrist_pose[0] * 1.5 + 0.5
-        scaled_wrist_pose[1] *= -2 + 1.5
-        # scaled_wrist_pose[2] = scaled_wrist_pose[2] * 20  - 0.4 
-        scaled_wrist_pose[2] = 1.3
+        scaled_wrist_pose[0] = -scaled_wrist_pose[0] * 1.5 + 0.1
+        scaled_wrist_pose[1] = -scaled_wrist_pose[1] * 2
+        scaled_wrist_pose[2] *= 2
         
         filtered_wrist_xyz = np.array([f(v) for f, v in zip(wrist_filter, scaled_wrist_pose[:3])])
         scaled_wrist_pose[:3] = filtered_wrist_xyz
@@ -79,7 +78,7 @@ def joint_pos_to_robot_pos(joint_pos:np.ndarray, retargeter:RetargetingConfig) -
 
 
 
-def retargeting(frame_queue: queue.Queue,stop_event, hand:Hand, robot_interface:Interface, config_path, urdf_path):
+def retargeting(frame_queue: queue.Queue, stop_event, camera, hand:Hand, robot_interface:Interface, config_path, urdf_path):
     detector = SingleHandDetector(hand_type=hand.value, selfie=False)
     RetargetingConfig.set_default_urdf_dir(str(urdf_path))
     retargeter = RetargetingConfig.load_from_file(config_path).build()
@@ -113,21 +112,45 @@ def retargeting(frame_queue: queue.Queue,stop_event, hand:Hand, robot_interface:
             continue
             # return
 
-        H, W = rgb.shape[:2]
+
         num_box, joint_pos, keypoint_2d, mediapipe_wrist_rot, keypoint_3d_array = detector.detect(rgb)
 
         
         # Pass if no keypoints detected
         if keypoint_2d is not None:
 
-            rgb = detector.draw_skeleton_on_image(rgb, keypoint_2d, style="default")
-            if depth is not None:
-                depth = detector.draw_skeleton_on_image(depth, keypoint_2d, style="default")
-            xy_cam = keypoint_2d[0]
-            xyz = np.array([xy_cam.x, xy_cam.y, 0]) # robot frame (x right, y forward, z up)
+            if depth is None:
+                # No z coord (hard code to )
+                xy_cam = keypoint_2d[0]
+                # Scale from 0 -> 1 to -0.2 to 0.2 (mimics depth)
+                x = (xy_cam.x - 0.5) * 0.4  
+                y = (xy_cam.y - 0.5) * 0.4
+                xyz = np.array([x, y, 0.6]) # robot frame (x right, y forward, z up)
+            else:
+                H, W = depth.shape                                                                                       
+                keypoints_px = SingleHandDetector.parse_keypoint_2d(keypoint_2d, (H, W))
+                wy, wx = keypoints_px[0].astype(int)  # wrist pixel (x, y)                                               
+
+                print(wx, wy)                                                                                                        
+                mask = np.zeros((H, W), dtype=np.int32)
+                mask[wx, wy] = 1  # Point cloud "mask" is just one point
+                
+                point_clouds, mask_ids = camera.depth_to_pointcloud(depth, mask)
+                wrist_cloud = point_clouds[mask_ids == 1][0]
+                if len(wrist_cloud) == 0:
+                    print("WARN: NO DEPTH AT WRIST PIXEL")
+                    continue  # no depth at wrist pixel, skip frame
+                xyz = wrist_cloud[0]
+
             wrist_pose = np.concatenate([xyz, np.array([0.707, 0.707, 0, 0]) ])
             gripper_pos = joint_pos_to_robot_pos(joint_pos, retargeter)
             scale_and_set_poses(hand, wrist_pose, gripper_pos, robot_interface, wrist_filters)
+
+            # Prep for drawing
+            rgb = detector.draw_skeleton_on_image(rgb, keypoint_2d, style="default")
+            if depth is not None:
+                depth = detector.draw_skeleton_on_image(depth, keypoint_2d, style="default")
+            
         else:
             # logger.warning("No keypoints detected.")
             pass
@@ -144,27 +167,16 @@ def retargeting(frame_queue: queue.Queue,stop_event, hand:Hand, robot_interface:
         pygame.display.flip()
 
 
-def produce_frame(frame_queue: queue.Queue, stop_event, camera_path: Optional[str] = None, camera_config_path=None):
-    FPS = 30
-    if camera_path is None:
-        cap = cv2.VideoCapture(0)
-    else:
-        cap = cv2.VideoCapture(camera_path)
+def produce_frame(frame_queue: queue.Queue, stop_event, camera, use_realsense:bool=True):
 
-    if camera_config_path:
-        camera = RealsenseInterface.from_yaml(camera_config_path)
-        camera.start(resolution=(640, 480), fps=FPS, align="color")
-
-
-
-    while cap.isOpened() and not stop_event.is_set():
-        if camera_path is not None:
-            success, bgr = cap.read()
+    while not stop_event.is_set():
+        if not use_realsense:
+            success, bgr = camera.read()
             color = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
             if not success:
                 continue
             depth = None
-        elif camera_config_path:
+        else:
             try:
                 frame = camera.latest()
                 color = frame.color
@@ -173,30 +185,43 @@ def produce_frame(frame_queue: queue.Queue, stop_event, camera_path: Optional[st
                 print("WARNING: No frame found from Realsense.")
                 continue
        
-        time.sleep(1 / FPS)
+        time.sleep(1 / 30.0)
 
-        # Put most recent frame
+        # Put most recent frame (drop others)
         try:                                                                                                     
             frame_queue.get_nowait()  # discard old frame                                                      
         except queue.Empty:                                                                                      
             pass
         frame_queue.put((color, depth))  
         
-    
-    cap.release()
+    if not use_realsense:
+        camera.release()
 
 
 
 def start_threading(robot_interface, hand_type, camera_path, retarget_config_path, urdf_path, camera_config_path):
     stop_event = threading.Event()
+
+    use_realsense = False
+    if camera_config_path:
+        use_realsense = True
+        camera = RealsenseInterface.from_yaml(camera_config_path)
+        camera.start(resolution=(640, 480), fps=30, align="color")
+    elif camera_path is None:
+        camera = cv2.VideoCapture(0)
+    else:
+        camera = cv2.VideoCapture(camera_path)
+
+
+
     
     # frame_queue = queue.Queue(maxsize=10)
     frame_queue = queue.Queue(maxsize=1)
     producer_process = threading.Thread(
-        target=produce_frame, args=(frame_queue, stop_event, camera_path, camera_config_path)
+        target=produce_frame, args=(frame_queue, stop_event, camera, use_realsense)
     )
     consumer_process = threading.Thread(
-        target=retargeting, args=(frame_queue, stop_event, hand_type, robot_interface, retarget_config_path, urdf_path)
+        target=retargeting, args=(frame_queue, stop_event, camera, hand_type, robot_interface, retarget_config_path, urdf_path)
     )
 
 
@@ -231,12 +256,14 @@ def main():
     CONFIG_DIR = Path(__file__).resolve().parents[0] / "robot_motion_interface" / "config"
     CONFIG_PATH = CONFIG_DIR / "isaacsim_config.yaml"
 
+    
     CAMERA_CONFIG_PATH = Path(__file__).parent / "sensor_interface_py" / "src" / "sensor_interface" / "camera" / "config" / "realsense_config.yaml"
+    # CAMERA_CONFIG_PATH = None  # None for integrated camera
 
     CAMERA_PATH = None # None for realsense, 0 for integrated camera
 
-    robot_interface = None
-    # robot_interface = IsaacsimInterface.from_yaml(CONFIG_PATH)
+    # robot_interface = None
+    robot_interface = IsaacsimInterface.from_yaml(CONFIG_PATH)
     
 
     start_threading(robot_interface, HAND_TYPE, CAMERA_PATH, RETARGET_CONFIG_PATH, RETARGET_ROBOT_URDF_DIR, CAMERA_CONFIG_PATH)
