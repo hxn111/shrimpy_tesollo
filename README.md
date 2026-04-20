@@ -97,3 +97,11 @@ python3 show_realtime_retargeting.py --robot-name tesollo --retargeting-type dex
 
 ## Resources
 * DexRetargeting Tutorial: https://github.com/dexsuite/dex-retargeting/blob/main/example/vector_retargeting/README.md
+
+## Diffusion Policy
+```
+conda activate robodiff
+
+# test lift_mh checkpoints on mujoco
+MUJOCO_GL=egl python eval.py --checkpoint data/lift_mh.ckpt --output_dir data/lift_mh_eval_output --device cuda:0
+```

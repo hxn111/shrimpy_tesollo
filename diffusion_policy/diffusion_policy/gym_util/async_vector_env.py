@@ -362,9 +362,22 @@ class AsyncVectorEnv(VectorEnv):
 
     def _check_observation_spaces(self):
         self._assert_is_running()
-        for pipe in self.parent_pipes:
-            pipe.send(("_check_observation_space", self.single_observation_space))
-        same_spaces, successes = zip(*[pipe.recv() for pipe in self.parent_pipes])
+        for i, pipe in enumerate(self.parent_pipes):
+            try:
+                pipe.send(("_check_observation_space", self.single_observation_space))
+            except (BrokenPipeError, OSError):
+                # Worker died during env creation; recv its failure signal so
+                # _raise_if_errors can pull the real exception from error_queue.
+                try:
+                    pipe.recv()
+                except Exception:
+                    pass
+                self.parent_pipes[i] = None
+
+        same_spaces, successes = zip(*[
+            pipe.recv() if pipe is not None else (False, False)
+            for pipe in self.parent_pipes
+        ])
         self._raise_if_errors(successes)
         if not all(same_spaces):
             raise RuntimeError(
@@ -394,8 +407,9 @@ class AsyncVectorEnv(VectorEnv):
                 "{1}: {2}".format(index, exctype.__name__, value)
             )
             logger.error("Shutting down Worker-{0}.".format(index))
-            self.parent_pipes[index].close()
-            self.parent_pipes[index] = None
+            if self.parent_pipes[index] is not None:
+                self.parent_pipes[index].close()
+                self.parent_pipes[index] = None
 
         logger.error("Raising the last exception back to the main process.")
         raise exctype(value)
@@ -561,9 +575,10 @@ class AsyncVectorEnv(VectorEnv):
 
 def _worker(index, env_fn, pipe, parent_pipe, shared_memory, error_queue):
     assert shared_memory is None
-    env = env_fn()
+    env = None
     parent_pipe.close()
     try:
+        env = env_fn()
         while True:
             command, data = pipe.recv()
             if command == "reset":
@@ -609,7 +624,8 @@ def _worker(index, env_fn, pipe, parent_pipe, shared_memory, error_queue):
         error_queue.put((index,) + sys.exc_info()[:2])
         pipe.send((None, False))
     finally:
-        env.close()
+        if env is not None:
+            env.close()
 
 
 def _worker_shared_memory(index, env_fn, pipe, parent_pipe, shared_memory, error_queue):
