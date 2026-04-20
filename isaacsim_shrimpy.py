@@ -2,9 +2,13 @@
 TODO
 """
 
-from dex_retargeting.example.vector_retargeting.single_hand_detector import SingleHandDetector
+
 from robot_motion_interface.isaacsim.isaacsim_interface import IsaacsimInterface
 from robot_motion_interface.interface import Interface
+
+from dex_retarget.example.vector_retargeting.single_hand_detector import SingleHandDetector
+from dex_retargeting.retargeting_config import RetargetingConfig
+
 from typing import Optional
 import time
 import threading
@@ -24,7 +28,7 @@ class Hand(Enum):
     LEFT = "Left"
     
 #  Assume camera is on table facing up!
-def scale_and_set_wrist_pose(hand:Hand, unscaled_wrist_pose:np.ndarray, robot_interface:Interface):
+def scale_and_set_poses(hand:Hand, unscaled_wrist_pose:np.ndarray, gripper_pos:np.ndarray, robot_interface:Interface):
     # DEFAULT_WRIST_GOAL_LEFT = np.array([-0.2, 0.2, 1.4, 0.707, 0.707, 0, 0])
     # DEFAULT_WRIST_GOAL_RIGHT = np.array([0.2, 0.2, 1.4, 0.707, 0.707, 0, 0])
 
@@ -38,13 +42,39 @@ def scale_and_set_wrist_pose(hand:Hand, unscaled_wrist_pose:np.ndarray, robot_in
         scaled_wrist_pose[2] = scaled_wrist_pose[2] * 20  - 0.4 # + 0.2 # Add 1.2 meters to z
 
         print("SCALED", scaled_wrist_pose)
-        robot_interface.set_cartesian_pose([scaled_wrist_pose], ['right_delto_offset_link'])
+        print("Gripper positions", gripper_pos)
+        if robot_interface:
+            robot_interface.set_cartesian_pose([scaled_wrist_pose], ['right_delto_offset_link'])
+            robot_interface.set_joint_positions(gripper_pos, 
+                ['right_F1M1','right_F1M2','right_F1M3', 'right_F1M4','right_F2M1','right_F2M2',
+                'right_F2M3','right_F2M4','right_F3M1', 'right_F3M2','right_F3M3','right_F3M4'])
     elif hand == Hand.LEFT:
-        robot_interface.set_cartesian_pose([scaled_wrist_pose], ['left_delto_offset_link'])
+        pass
+        # robot_interface.set_cartesian_pose([scaled_wrist_pose], ['left_delto_offset_link'])
+
+def joint_pos_to_robot_pos(joint_pos:np.ndarray, retargeter:RetargetingConfig) -> np.ndarray:
+
+    if joint_pos is None:
+        logger.warning(f"Hand is not detected.")
+        return
+
+    
+
+    indices = retargeter.optimizer.target_link_human_indices
+
+    origin_indices = indices[0, :]
+    task_indices = indices[1, :]
+    ref_value = joint_pos[task_indices, :] - joint_pos[origin_indices, :]
+    qpos = retargeter.retarget(ref_value)
+
+    return qpos
 
 
-def retargeting(frame_queue: queue.Queue,stop_event,  hand:Hand, robot_interface:Interface):
+
+def retargeting(frame_queue: queue.Queue,stop_event, hand:Hand, robot_interface:Interface, config_path, urdf_path):
     detector = SingleHandDetector(hand_type=hand.value, selfie=False)
+    RetargetingConfig.set_default_urdf_dir(str(urdf_path))
+    retargeter = RetargetingConfig.load_from_file(config_path).build()
     while not stop_event.is_set():
         try:
             bgr = frame_queue.get(timeout=5)
@@ -66,8 +96,8 @@ def retargeting(frame_queue: queue.Queue,stop_event,  hand:Hand, robot_interface
             xyz_cam = keypoint_3d_array[0]
             xyz = np.array([xyz_cam[0], xyz_cam[2], xyz_cam[1]]) # robot frame (x right, y forward, z up)
             wrist_pose = np.concatenate([xyz, np.array([0.707, 0.707, 0, 0]) ])
-            
-            scale_and_set_wrist_pose(hand, wrist_pose, robot_interface)
+            gripper_pos = joint_pos_to_robot_pos(joint_pos, retargeter)
+            scale_and_set_poses(hand, wrist_pose, gripper_pos, robot_interface)
         else:
             # logger.warning("No keypoints detected.")
             pass
@@ -101,7 +131,7 @@ def produce_frame(frame_queue: queue.Queue, stop_event, camera_path: Optional[st
 
 
 
-def start_threading(robot_interface, hand_type, camera_path):
+def start_threading(robot_interface, hand_type, camera_path, retarget_config_path, urdf_path):
     stop_event = threading.Event()
     
     frame_queue = queue.Queue(maxsize=10)
@@ -109,7 +139,7 @@ def start_threading(robot_interface, hand_type, camera_path):
         target=produce_frame, args=(frame_queue, stop_event, camera_path)
     )
     consumer_process = threading.Thread(
-        target=retargeting, args=(frame_queue, stop_event, hand_type, robot_interface)
+        target=retargeting, args=(frame_queue, stop_event, hand_type, robot_interface, retarget_config_path, urdf_path)
     )
 
 
@@ -119,11 +149,13 @@ def start_threading(robot_interface, hand_type, camera_path):
     def handle_sigint(signum, frame):
         print("Shutting down...")
         stop_event.set()
-        robot_interface.stop()
+        if robot_interface:
+            robot_interface.stop()
         
     signal.signal(signal.SIGINT, handle_sigint)
     # Needs to be in main thread
-    robot_interface.start_loop()
+    if robot_interface:
+        robot_interface.start_loop()
 
 
     producer_process.join()
@@ -134,28 +166,24 @@ def main():
     """
     TODO
     """
+    HAND_TYPE = Hand.RIGHT
+
+    RETARGET_ROOT = Path(__file__).parent / "dex_retarget"
+    RETARGET_CONFIG_PATH = RETARGET_ROOT / "src" / "dex_retargeting" / "configs" / "teleop" / f"tesollo_hand_{HAND_TYPE.value.lower()}_dexpilot.yml"
+    RETARGET_ROBOT_URDF_DIR =  RETARGET_ROOT / "assets" / "robots" / "hands"
     CONFIG_DIR = Path(__file__).resolve().parents[0] / "robot_motion_interface" / "config"
     CONFIG_PATH = CONFIG_DIR / "isaacsim_config.yaml"
 
-    HAND_TYPE = Hand.RIGHT
+    
     CAMERA_PATH = 0
 
     robot_interface = IsaacsimInterface.from_yaml(CONFIG_PATH)
     # robot_interface = None
 
-    start_threading(robot_interface, HAND_TYPE, CAMERA_PATH)
+    start_threading(robot_interface, HAND_TYPE, CAMERA_PATH, RETARGET_CONFIG_PATH, RETARGET_ROBOT_URDF_DIR)
 
-    # 
 
-    # wrist_goal_left = np.array([-0.2, 0.2, 1.4, 0.707, 0.707, 0, 0])
-    # wrist_goal_right = np.array([0.2, 0.2, 1.4, 0.707, 0.707, 0, 0])
-    
-    # x = [wrist_goal_left, wrist_goal_right]
-    # isaac.set_cartesian_pose(x, ['left_delto_offset_link', 'right_delto_offset_link'])
-
-    # 
 
 
 if __name__ == "__main__":
-    # multiprocessing.set_start_method("spawn", force=True)
     main()
