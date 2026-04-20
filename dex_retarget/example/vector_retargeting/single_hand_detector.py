@@ -179,7 +179,10 @@ class SingleHandDetector:
         for i in range(21):
             keypoint[i][0] = keypoint_2d[i].x
             keypoint[i][1] = keypoint_2d[i].y
-        keypoint = keypoint * np.array([img_size[1], img_size[0]])[None, :]
+
+        keypoint = keypoint * np.array([img_size[1] - 1, img_size[0] - 1])[None, :]
+        # keypoint_2d can have rounding issue so slighting bigger than 1 so this clips
+        keypoint = np.clip(keypoint, [0, 0], [img_size[1] - 1, img_size[0] - 1])
         return keypoint
 
     @staticmethod

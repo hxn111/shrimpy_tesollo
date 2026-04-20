@@ -28,7 +28,11 @@ a. On MACHINE A (Docker with Isaacsim and workplace dependencies):
 xhost +local: # Note: This isn't very secure but is th easiest way to do this
 sudo docker compose -f compose.isaac.yaml build
 sudo docker compose -f compose.isaac.yaml run --rm isaac-base  # Opens TERMINAL 1
-pip install OneEuroFilter pygame # TODO: ADD THIS TO DOCKER
+
+# TODO: ADD THIS TO DOCKER:
+pip install OneEuroFilter pygame 
+pip install -e sensor_interface_py
+pip install "numpy<2"
 ```
 
 To test that isaacsim is working correctly, you can run `. /isaac-sim/isaac-sim.sh`.
