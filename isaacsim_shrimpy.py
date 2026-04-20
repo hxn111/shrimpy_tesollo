@@ -5,6 +5,8 @@ TODO
 
 from robot_motion_interface.isaacsim.isaacsim_interface import IsaacsimInterface
 from robot_motion_interface.interface import Interface
+from sensor_interface.camera.realsense_interface import RealsenseInterface
+
 
 from dex_retarget.example.vector_retargeting.single_hand_detector import SingleHandDetector
 from dex_retargeting.retargeting_config import RetargetingConfig
@@ -94,6 +96,12 @@ def retargeting(frame_queue: queue.Queue,stop_event, hand:Hand, robot_interface:
     screen = pygame.display.set_mode((640, 480))
 
 
+
+
+
+    ###########################
+
+
     while not stop_event.is_set():
         try:
             bgr = frame_queue.get(timeout=5)
@@ -129,29 +137,46 @@ def retargeting(frame_queue: queue.Queue,stop_event, hand:Hand, robot_interface:
         pygame.display.flip()
 
 
-def produce_frame(frame_queue: queue.Queue, stop_event, camera_path: Optional[str] = None):
+def produce_frame(frame_queue: queue.Queue, stop_event, camera_path: Optional[str] = None, camera_config_path=None):
     if camera_path is None:
         cap = cv2.VideoCapture(0)
     else:
         cap = cv2.VideoCapture(camera_path)
 
+    if camera_config_path:
+        camera = RealsenseInterface.from_yaml(camera_config_path)
+        camera.start(resolution=(640, 480), fps=30, align="color")
+
+
+
     while cap.isOpened() and not stop_event.is_set():
-        success, image = cap.read()
+        if camera_path is not None:
+            success, image = cap.read()
+            if not success:
+                continue
+        elif camera_config_path:
+            try:
+                frame = camera.latest()
+                image = cv2.cvtColor(frame.color, cv2.COLOR_RGB2BGR)
+            except RuntimeError:
+                print("WARNING: No frame found from Realsense.")
+                continue
+
+
         time.sleep(1 / 30.0)
-        if not success:
-            continue
+
         frame_queue.put(image)
     
     cap.release()
 
 
 
-def start_threading(robot_interface, hand_type, camera_path, retarget_config_path, urdf_path):
+def start_threading(robot_interface, hand_type, camera_path, retarget_config_path, urdf_path, camera_config_path):
     stop_event = threading.Event()
     
     frame_queue = queue.Queue(maxsize=10)
     producer_process = threading.Thread(
-        target=produce_frame, args=(frame_queue, stop_event, camera_path)
+        target=produce_frame, args=(frame_queue, stop_event, camera_path, camera_config_path)
     )
     consumer_process = threading.Thread(
         target=retargeting, args=(frame_queue, stop_event, hand_type, robot_interface, retarget_config_path, urdf_path)
@@ -189,13 +214,14 @@ def main():
     CONFIG_DIR = Path(__file__).resolve().parents[0] / "robot_motion_interface" / "config"
     CONFIG_PATH = CONFIG_DIR / "isaacsim_config.yaml"
 
-    
-    CAMERA_PATH = 0
+    CAMERA_CONFIG_PATH = Path(__file__).parent / "sensor_interface_py" / "src" / "sensor_interface" / "camera" / "config" / "realsense_config.yaml"
+
+    CAMERA_PATH = None # None for realsense, 0 for integrated camera
 
     robot_interface = IsaacsimInterface.from_yaml(CONFIG_PATH)
     # robot_interface = None
 
-    start_threading(robot_interface, HAND_TYPE, CAMERA_PATH, RETARGET_CONFIG_PATH, RETARGET_ROBOT_URDF_DIR)
+    start_threading(robot_interface, HAND_TYPE, CAMERA_PATH, RETARGET_CONFIG_PATH, RETARGET_ROBOT_URDF_DIR, CAMERA_CONFIG_PATH)
 
 
 
