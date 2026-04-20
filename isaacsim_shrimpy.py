@@ -93,7 +93,7 @@ def retargeting(frame_queue: queue.Queue,stop_event, hand:Hand, robot_interface:
     wrist_filters = [OneEuroFilter(**filter_config) for _ in range(3)]
 
     pygame.init()
-    screen = pygame.display.set_mode((640, 480))
+    screen = pygame.display.set_mode((1280, 480))
 
 
 
@@ -104,8 +104,8 @@ def retargeting(frame_queue: queue.Queue,stop_event, hand:Hand, robot_interface:
 
     while not stop_event.is_set():
         try:
-            bgr = frame_queue.get(timeout=5)
-            rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+            rgb, depth = frame_queue.get(timeout=5)
+
         except Empty:
             logger.error(
                 "Fail to fetch image from camera in 5 secs. Please check your web camera device."
@@ -113,13 +113,16 @@ def retargeting(frame_queue: queue.Queue,stop_event, hand:Hand, robot_interface:
             continue
             # return
 
+        H, W = rgb.shape[:2]
         num_box, joint_pos, keypoint_2d, mediapipe_wrist_rot, keypoint_3d_array = detector.detect(rgb)
 
         
         # Pass if no keypoints detected
         if keypoint_2d is not None:
 
-            bgr = detector.draw_skeleton_on_image(bgr, keypoint_2d, style="default")
+            rgb = detector.draw_skeleton_on_image(rgb, keypoint_2d, style="default")
+            if depth is not None:
+                depth = detector.draw_skeleton_on_image(depth, keypoint_2d, style="default")
             xy_cam = keypoint_2d[0]
             xyz = np.array([xy_cam.x, xy_cam.y, 0]) # robot frame (x right, y forward, z up)
             wrist_pose = np.concatenate([xyz, np.array([0.707, 0.707, 0, 0]) ])
@@ -129,15 +132,20 @@ def retargeting(frame_queue: queue.Queue,stop_event, hand:Hand, robot_interface:
             # logger.warning("No keypoints detected.")
             pass
         
-        # cv2.imshow requires uninstalling opencv-python-headless but that is incompatible with Isaacsim
-        # Instead use pygame
-        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-        surf = pygame.surfarray.make_surface(rgb.swapaxes(0, 1))
+        if depth is not None:
+            depth_norm = cv2.normalize(depth, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+            depth_color = cv2.cvtColor(cv2.applyColorMap(depth_norm, cv2.COLORMAP_JET), cv2.COLOR_BGR2RGB)
+        else:
+            depth_color = np.zeros_like(rgb)
+
+        combined = np.hstack([rgb, depth_color])
+        surf = pygame.surfarray.make_surface(combined.swapaxes(0, 1))
         screen.blit(surf, (0, 0))
         pygame.display.flip()
 
 
 def produce_frame(frame_queue: queue.Queue, stop_event, camera_path: Optional[str] = None, camera_config_path=None):
+    FPS = 30
     if camera_path is None:
         cap = cv2.VideoCapture(0)
     else:
@@ -145,27 +153,35 @@ def produce_frame(frame_queue: queue.Queue, stop_event, camera_path: Optional[st
 
     if camera_config_path:
         camera = RealsenseInterface.from_yaml(camera_config_path)
-        camera.start(resolution=(640, 480), fps=30, align="color")
+        camera.start(resolution=(640, 480), fps=FPS, align="color")
 
 
 
     while cap.isOpened() and not stop_event.is_set():
         if camera_path is not None:
-            success, image = cap.read()
+            success, bgr = cap.read()
+            color = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
             if not success:
                 continue
+            depth = None
         elif camera_config_path:
             try:
                 frame = camera.latest()
-                image = cv2.cvtColor(frame.color, cv2.COLOR_RGB2BGR)
+                color = frame.color
+                depth = frame.depth
             except RuntimeError:
                 print("WARNING: No frame found from Realsense.")
                 continue
+       
+        time.sleep(1 / FPS)
 
-
-        time.sleep(1 / 30.0)
-
-        frame_queue.put(image)
+        # Put most recent frame
+        try:                                                                                                     
+            frame_queue.get_nowait()  # discard old frame                                                      
+        except queue.Empty:                                                                                      
+            pass
+        frame_queue.put((color, depth))  
+        
     
     cap.release()
 
@@ -174,7 +190,8 @@ def produce_frame(frame_queue: queue.Queue, stop_event, camera_path: Optional[st
 def start_threading(robot_interface, hand_type, camera_path, retarget_config_path, urdf_path, camera_config_path):
     stop_event = threading.Event()
     
-    frame_queue = queue.Queue(maxsize=10)
+    # frame_queue = queue.Queue(maxsize=10)
+    frame_queue = queue.Queue(maxsize=1)
     producer_process = threading.Thread(
         target=produce_frame, args=(frame_queue, stop_event, camera_path, camera_config_path)
     )
@@ -218,8 +235,9 @@ def main():
 
     CAMERA_PATH = None # None for realsense, 0 for integrated camera
 
-    robot_interface = IsaacsimInterface.from_yaml(CONFIG_PATH)
-    # robot_interface = None
+    robot_interface = None
+    # robot_interface = IsaacsimInterface.from_yaml(CONFIG_PATH)
+    
 
     start_threading(robot_interface, HAND_TYPE, CAMERA_PATH, RETARGET_CONFIG_PATH, RETARGET_ROBOT_URDF_DIR, CAMERA_CONFIG_PATH)
 
