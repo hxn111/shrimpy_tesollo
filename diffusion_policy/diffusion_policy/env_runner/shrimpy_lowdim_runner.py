@@ -20,7 +20,7 @@ from diffusion_policy.common.pytorch_util import dict_apply
 from diffusion_policy.env_runner.base_lowdim_runner import BaseLowdimRunner
 
 # TODO: EVERYTHING BELOW HERE
-from diffusion_policy.env.robomimic.robomimic_lowdim_wrapper import RobomimicLowdimWrapper
+from diffusion_policy.env.shrimpy.isaacsim_lowdim_wrapper import IsaacsimLowdimWrapper
 import robomimic.utils.file_utils as FileUtils
 import robomimic.utils.env_utils as EnvUtils
 import robomimic.utils.obs_utils as ObsUtils
@@ -120,7 +120,7 @@ class ShrimpyLowdimRunner(BaseLowdimRunner):
             # robomimic_env.env.hard_reset = False
             return MultiStepWrapper(
                     VideoRecordingWrapper(
-                        RobomimicLowdimWrapper(
+                        IsaacsimLowdimWrapper(
                             env=robomimic_env,
                             obs_keys=obs_keys,
                             init_state=None,
@@ -170,7 +170,7 @@ class ShrimpyLowdimRunner(BaseLowdimRunner):
                         env.env.file_path = filename
 
                     # switch to init_state reset
-                    assert isinstance(env.env.env, RobomimicLowdimWrapper)
+                    assert isinstance(env.env.env, IsaacsimLowdimWrapper)
                     env.env.env.init_state = init_state
 
                 env_seeds.append(train_idx)
@@ -197,7 +197,7 @@ class ShrimpyLowdimRunner(BaseLowdimRunner):
                     env.env.file_path = filename
 
                 # switch to seed reset
-                assert isinstance(env.env.env, RobomimicLowdimWrapper)
+                assert isinstance(env.env.env, IsaacsimLowdimWrapper)
                 env.env.env.init_state = None
                 env.seed(seed)
 
@@ -348,6 +348,7 @@ class ShrimpyLowdimRunner(BaseLowdimRunner):
 
         return log_data
 
+    # TODO: CHECK THIS IS CORRECT
     def undo_transform_action(self, action):
         raw_shape = action.shape
         if raw_shape[-1] == 20:
