@@ -40,7 +40,7 @@ def create_env(env_meta, obs_keys):
     )
     return env
 
-# TODO: IMPLMENT THIS
+
 class ShrimpyLowdimRunner(BaseLowdimRunner):
     """
     Robomimic envs already enforces number of steps.
@@ -112,16 +112,17 @@ class ShrimpyLowdimRunner(BaseLowdimRunner):
             rotation_transformer = RotationTransformer('axis_angle', 'rotation_6d')
 
         def env_fn():
-            robomimic_env = create_env(
-                    env_meta=env_meta, 
-                    obs_keys=obs_keys
-                )
+            # robomimic_env = create_env(
+            #         env_meta=env_meta, 
+            #         obs_keys=obs_keys
+            #     )
             # hard reset doesn't influence lowdim env
             # robomimic_env.env.hard_reset = False
             return MultiStepWrapper(
                     VideoRecordingWrapper(
                         IsaacsimLowdimWrapper(
-                            env=robomimic_env,
+
+                            # env=robomimic_env,
                             obs_keys=obs_keys,
                             init_state=None,
                             render_hw=render_hw,

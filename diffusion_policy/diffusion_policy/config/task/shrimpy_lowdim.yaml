@@ -14,8 +14,8 @@ dataset_type: &dataset_type ph
 # dataset_path: &dataset_path data/robomimic/datasets/${task.task_name}/${task.dataset_type}/low_dim.hdf5
 # TODO: GET DIS DATA
 dataset_path: &dataset_path shrimpy_data/isaacsim_demos_converted/low_dim.hdf5
-abs_action: &abs_action False
-
+# abs_action: &abs_action False
+abs_action: &abs_action True
 env_runner:
   
   _target_: diffusion_policy.env_runner.shrimpy_lowdim_runner.ShrimpyLowdimRunner

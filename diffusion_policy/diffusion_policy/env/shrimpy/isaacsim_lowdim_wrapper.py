@@ -3,11 +3,14 @@ import numpy as np
 import gym
 from gym.spaces import Box
 from robomimic.envs.env_robosuite import EnvRobosuite
+from scipy.spatial.transform import Rotation
+from robot_motion_interface.isaacsim.isaacsim_interface import IsaacsimInterface
+
 
 ################################################################# TODO: IMPLEMENT THIS
-class IsaacsimLowdimWrapper(gym.Env):
+class IsaacsimLowdimWrapper():
     def __init__(self, 
-        env: EnvRobosuite,
+        # env: EnvRobosuite,
         obs_keys: List[str]=[
             'object', 
             'robot0_eef_pos', 
@@ -18,7 +21,16 @@ class IsaacsimLowdimWrapper(gym.Env):
         render_camera_name='agentview'
         ):
 
-        self.env = env
+        # TODO: DON'T HARD CODE THIS
+        ACTION_DIM = 18
+        ROBOT_INTEFACE_CONFIG_DIR = "/workspace/robot_motion_interface/config/isaacsim_config.yaml" 
+
+
+        self.robot_interface = IsaacsimInterface.from_yaml(ROBOT_INTEFACE_CONFIG_DIR)
+        
+
+
+        # self.env = env
         self.obs_keys = obs_keys
         self.init_state = init_state
         self.render_hw = render_hw
@@ -27,8 +39,8 @@ class IsaacsimLowdimWrapper(gym.Env):
         self._seed = None
         
         # setup spaces
-        low = np.full(env.action_dimension, fill_value=-1)
-        high = np.full(env.action_dimension, fill_value=1)
+        low = np.full(ACTION_DIM, fill_value=-1)
+        high = np.full(ACTION_DIM, fill_value=1)
         self.action_space = Box(
             low=low,
             high=high,
@@ -45,11 +57,29 @@ class IsaacsimLowdimWrapper(gym.Env):
             dtype=low.dtype
         )
 
+        # TODO: DON'T HARD CODE
+        self.EE_FRAME = 'right_delto_offset_link'
+        self.GRIPPER_JOINT_NAMES = ['right_F1M1','right_F1M2','right_F1M3', 'right_F1M4','right_F2M1','right_F2M2',
+                'right_F2M3','right_F2M4','right_F3M1', 'right_F3M2','right_F3M3','right_F3M4']
+
+        self.robot_interface.start_loop() # TODO: SEE IF THIS NEEDS TO BE THREADED
+
     def get_observation(self):
-        raw_obs = self.env.get_observation()
-        obs = np.concatenate([
-            raw_obs[key] for key in self.obs_keys
-        ], axis=0)
+        # TODO: UN-HARDCODE
+        # ['robot0_eef_pos', 'robot0_eef_quat', 'robot0_gripper_qpos']
+
+        robot0_eef_pose = self.robot_interface.cartesian_pose([self.EE_FRAME ])[0][0]
+        robot0_eef_pos = robot0_eef_pose[:3]
+        robot0_eef_quat = robot0_eef_pose[3:]
+
+        
+        names = self.robot_interface.joint_names()                 
+        pos = self.robot_interface.joint_state()[0::2]                                                                             
+        robot0_gripper_qpos = pos[[names.index(n) for n in self.GRIPPER_JOINT_NAMES]]
+
+        
+        obs = np.concatenate([robot0_eef_pos, robot0_eef_quat, robot0_gripper_qpos], axis=0)
+        
         return obs
 
     def seed(self, seed=None):
@@ -60,40 +90,36 @@ class IsaacsimLowdimWrapper(gym.Env):
         if self.init_state is not None:
             # always reset to the same state
             # to be compatible with gym
-            self.env.reset_to({'states': self.init_state})
-        elif self._seed is not None:
-            # reset to a specific seed
-            seed = self._seed
-            if seed in self.seed_state_map:
-                # env.reset is expensive, use cache
-                self.env.reset_to({'states': self.seed_state_map[seed]})
-            else:
-                # robosuite's initializes all use numpy global random state
-                np.random.seed(seed=seed)
-                self.env.reset()
-                state = self.env.get_state()['states']
-                self.seed_state_map[seed] = state
-            self._seed = None
-        else:
-            # random reset
-            self.env.reset()
-
-        # return obs
+            self.robot_interface.home()
+       
         obs = self.get_observation()
         return obs
     
     def step(self, action):
-        raw_obs, reward, done, info = self.env.step(action)
-        obs = np.concatenate([
-            raw_obs[key] for key in self.obs_keys
-        ], axis=0)
+
+        # 3 for ee pos (x, y, z), 3 for ee rotation (roll, pitch, yaw), 12 for gripper qpos (4 joints each finger)
+        ee_pos = action[:3]
+        ee_roll_pitch_yaw = action[3:6]
+        ee_quat = Rotation.from_euler('xyz', ee_roll_pitch_yaw).as_quat()
+
+        ee_pose = np.concatenate([ee_pos, ee_quat])
+        gripper_qpos = action[6:]
+        
+        self.robot_interface.set_cartesian_pose([ee_pose], [self.EE_FRAME])
+        self.robot_interface.set_joint_positions(gripper_qpos, self.GRIPPER_JOINT_NAMES)
+
+        
+        obs = self.get_observation()
+
+        # TODO: FIGURE OUT REWARD
+        reward = 0
+        done = False
+        info = None
         return obs, reward, done, info
+
     
     def render(self, mode='rgb_array'):
-        h, w = self.render_hw
-        return self.env.render(mode=mode, 
-            height=h, width=w, 
-            camera_name=self.render_camera_name)
+        return None
 
 
 def test():
@@ -105,14 +131,9 @@ def test():
     env_meta = FileUtils.get_env_metadata_from_dataset(
         dataset_path)
 
-    env = EnvUtils.create_env_from_metadata(
-        env_meta=env_meta,
-        render=False, 
-        render_offscreen=False,
-        use_image_obs=False, 
-    )
+
     wrapper = IsaacsimLowdimWrapper(
-        env=env,
+        # env=env,
         obs_keys=[
             'object', 
             'robot0_eef_pos', 
