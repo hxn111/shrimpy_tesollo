@@ -60,20 +60,14 @@ def scale_and_set_poses(hand:Hand, unscaled_wrist_pose:np.ndarray, gripper_pos:n
         # robot_interface.set_cartesian_pose([scaled_wrist_pose], ['left_delto_offset_link'])
 
 def joint_pos_to_robot_pos(joint_pos:np.ndarray, retargeter:RetargetingConfig) -> np.ndarray:
-
     if joint_pos is None:
         logger.warning(f"Hand is not detected.")
         return
-
-    
-
     indices = retargeter.optimizer.target_link_human_indices
-
     origin_indices = indices[0, :]
     task_indices = indices[1, :]
     ref_value = joint_pos[task_indices, :] - joint_pos[origin_indices, :]
     qpos = retargeter.retarget(ref_value)
-
     return qpos
 
 

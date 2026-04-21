@@ -1,2 +1,6 @@
-from .robot_motion_interface_pybind import PandaInterface as PandaInterfacePybind
-from .robot_motion_interface_pybind import TesolloDg3fInterface as TesolloDg3fInterfacePybind
+try:
+    from .robot_motion_interface_pybind import PandaInterface as PandaInterfacePybind
+    from .robot_motion_interface_pybind import TesolloDg3fInterface as TesolloDg3fInterfacePybind
+except ModuleNotFoundError:
+    PandaInterfacePybind = None
+    TesolloDg3fInterfacePybind = None
