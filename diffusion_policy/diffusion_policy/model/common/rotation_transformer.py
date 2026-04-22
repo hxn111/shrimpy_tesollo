@@ -1,5 +1,5 @@
 from typing import Union
-import pytorch3d.transforms as pt
+# import pytorch3d.transforms as pt
 import torch
 import numpy as np
 import functools
@@ -23,6 +23,7 @@ class RotationTransformer:
 
         Always use matrix as intermediate representation.
         """
+        import pytorch3d.transforms as pt # Imported here to avoid dependency in other files that don't need it
         assert from_rep != to_rep
         assert from_rep in self.valid_reps
         assert to_rep in self.valid_reps

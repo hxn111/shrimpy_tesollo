@@ -1,3 +1,4 @@
+# from email import policy
 import os
 import wandb
 import numpy as np
@@ -5,9 +6,11 @@ import torch
 import collections
 import pathlib
 import tqdm
-import h5py
+# import h5py
 import dill
 import math
+import threading
+
 import wandb.sdk.data_types.video as wv
 from diffusion_policy.gym_util.async_vector_env import AsyncVectorEnv
 # from diffusion_policy.gym_util.sync_vector_env import SyncVectorEnv
@@ -22,23 +25,23 @@ from diffusion_policy.env_runner.base_lowdim_runner import BaseLowdimRunner
 # TODO: EVERYTHING BELOW HERE
 from diffusion_policy.env.shrimpy.isaacsim_lowdim_wrapper import IsaacsimLowdimWrapper
 import robomimic.utils.file_utils as FileUtils
-import robomimic.utils.env_utils as EnvUtils
-import robomimic.utils.obs_utils as ObsUtils
+# import robomimic.utils.env_utils as EnvUtils
+# import robomimic.utils.obs_utils as ObsUtils
 ################################################################
 
-def create_env(env_meta, obs_keys):
-    ObsUtils.initialize_obs_modality_mapping_from_dict(
-        {'low_dim': obs_keys})
-    env = EnvUtils.create_env_from_metadata(
-        env_meta=env_meta,
-        render=False, 
-        # only way to not show collision geometry
-        # is to enable render_offscreen
-        # which uses a lot of RAM.
-        render_offscreen=False,
-        use_image_obs=False, 
-    )
-    return env
+# def create_env(env_meta, obs_keys):
+#     ObsUtils.initialize_obs_modality_mapping_from_dict(
+#         {'low_dim': obs_keys})
+#     env = EnvUtils.create_env_from_metadata(
+#         env_meta=env_meta,
+#         render=False, 
+#         # only way to not show collision geometry
+#         # is to enable render_offscreen
+#         # which uses a lot of RAM.
+#         render_offscreen=False,
+#         use_image_obs=False, 
+#     )
+#     return env
 
 
 class ShrimpyLowdimRunner(BaseLowdimRunner):
@@ -149,34 +152,34 @@ class ShrimpyLowdimRunner(BaseLowdimRunner):
         env_prefixs = list()
         env_init_fn_dills = list()
 
-        # train
-        with h5py.File(dataset_path, 'r') as f:
-            for i in range(n_train):
-                train_idx = train_start_idx + i
-                enable_render = i < n_train_vis
-                init_state = f[f'data/demo_{train_idx}/states'][0]
+        # # train
+        # with h5py.File(dataset_path, 'r') as f:
+        #     for i in range(n_train):
+        #         train_idx = train_start_idx + i
+        #         enable_render = i < n_train_vis
+        #         init_state = f[f'data/demo_{train_idx}/states'][0]
 
-                def init_fn(env, init_state=init_state, 
-                    enable_render=enable_render):
-                    # setup rendering
-                    # video_wrapper
-                    assert isinstance(env.env, VideoRecordingWrapper)
-                    env.env.video_recoder.stop()
-                    env.env.file_path = None
-                    if enable_render:
-                        filename = pathlib.Path(output_dir).joinpath(
-                            'media', wv.util.generate_id() + ".mp4")
-                        filename.parent.mkdir(parents=False, exist_ok=True)
-                        filename = str(filename)
-                        env.env.file_path = filename
+        #         def init_fn(env, init_state=init_state, 
+        #             enable_render=enable_render):
+        #             # setup rendering
+        #             # video_wrapper
+        #             assert isinstance(env.env, VideoRecordingWrapper)
+        #             env.env.video_recoder.stop()
+        #             env.env.file_path = None
+        #             if enable_render:
+        #                 filename = pathlib.Path(output_dir).joinpath(
+        #                     'media', wv.util.generate_id() + ".mp4")
+        #                 filename.parent.mkdir(parents=False, exist_ok=True)
+        #                 filename = str(filename)
+        #                 env.env.file_path = filename
 
-                    # switch to init_state reset
-                    assert isinstance(env.env.env, IsaacsimLowdimWrapper)
-                    env.env.env.init_state = init_state
+        #             # switch to init_state reset
+        #             assert isinstance(env.env.env, IsaacsimLowdimWrapper)
+        #             env.env.env.init_state = init_state
 
-                env_seeds.append(train_idx)
-                env_prefixs.append('train/')
-                env_init_fn_dills.append(dill.dumps(init_fn))
+        #         env_seeds.append(train_idx)
+        #         env_prefixs.append('train/')
+        #         env_init_fn_dills.append(dill.dumps(init_fn))
         
         # test
         for i in range(n_test):
@@ -229,6 +232,24 @@ class ShrimpyLowdimRunner(BaseLowdimRunner):
         self.tqdm_interval_sec = tqdm_interval_sec
 
     def run(self, policy: BaseLowdimPolicy):
+        log_data = {}
+        def target():
+          nonlocal log_data                                                                                                                                                                       
+          log_data = self.run_in_thread(policy) 
+
+
+        run_thread = threading.Thread(target=target)
+        run_thread.start()
+
+        self.env.start_loop()
+        
+        run_thread.join()
+        return log_data
+
+
+
+
+    def run_in_thread(self, policy: BaseLowdimPolicy):
         device = policy.device
         dtype = policy.dtype
         env = self.env

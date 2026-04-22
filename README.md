@@ -32,7 +32,7 @@ sudo docker compose -f compose.isaac.yaml run --rm isaac-base  # Opens TERMINAL 
 # TODO: ADD THIS TO DOCKER:
 pip install OneEuroFilter pygame 
 pip install -e sensor_interface_py
-pip install "numpy<2"
+# pip install "numpy<2"
 ```
 
 To test that isaacsim is working correctly, you can run `. /isaac-sim/isaac-sim.sh`.
@@ -54,12 +54,12 @@ NOTE: if you need to start another terminal, once the container is started, run 
 
 ## Running
 
-## Sim Testing
+### Sim Testing
 ```bash
 python3 isaacsim_shrimpy.py
 ```
 
-## Dex Retargeting
+### Dex Retargeting
 ```bash
 cd dex_retargeting/example/vector_retargeting
 ```
@@ -83,6 +83,25 @@ To run realtime visualization via webcam:
 ```bash
 
 python3 show_realtime_retargeting.py --robot-name tesollo --retargeting-type dexpilot --hand-type right 
+```
+
+
+### Diffusion Low Dimension Training
+Make sure you run this in the container...
+
+Setup:
+```bash
+cd /workspace/diffusion_policy
+conda install dill diffusers zarr pytorch3d "numpy==1.26" "numcodecs<0.16" pandas
+
+```
+
+Running:
+```bash
+
+python train.py --config-name=train_diffusion_unet_lowdim_workspace task=shrimpy_lowdim
+
+HYDRA_FULL_ERROR=1 python train.py --config-name=train_diffusion_unet_lowdim_workspace task=shrimpy_lowdim
 ```
 
 ## Utils

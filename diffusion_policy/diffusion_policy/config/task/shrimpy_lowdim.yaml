@@ -5,7 +5,7 @@ obs_dim: 19
 
 # 3 for ee pos (x, y, z), 3 for ee rotation (roll, pitch, yaw), 12 for gripper qpos (4 joints each finger)
 action_dim: 18
-# keypoint_dim: 3
+keypoint_dim: 3 # Masking is disabled so this doesn't matter (I think but I'm not sure)
 
 # obs_keys: &obs_keys ['object', 'robot0_eef_pos', 'robot0_eef_quat', 'robot0_gripper_qpos']
 obs_keys: &obs_keys ['robot0_eef_pos', 'robot0_eef_quat', 'robot0_gripper_qpos'] # TODO: MAKE SURE THESE ARE NAMED IN DATA
@@ -15,7 +15,7 @@ dataset_type: &dataset_type ph
 # TODO: GET DIS DATA
 dataset_path: &dataset_path shrimpy_data/isaacsim_demos_converted/low_dim.hdf5
 # abs_action: &abs_action False
-abs_action: &abs_action True
+abs_action: &abs_action False
 env_runner:
   
   _target_: diffusion_policy.env_runner.shrimpy_lowdim_runner.ShrimpyLowdimRunner

@@ -1,10 +1,10 @@
 from typing import List, Dict, Optional
 import numpy as np
 import gym
-import threading
+# import threading
 import time
 from gym.spaces import Box
-from robomimic.envs.env_robosuite import EnvRobosuite
+# from robomimic.envs.env_robosuite import EnvRobosuite
 from scipy.spatial.transform import Rotation
 from robot_motion_interface.isaacsim.isaacsim_interface import IsaacsimInterface
 

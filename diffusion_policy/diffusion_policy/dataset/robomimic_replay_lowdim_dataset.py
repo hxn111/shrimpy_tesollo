@@ -37,8 +37,12 @@ class RobomimicReplayLowdimDataset(BaseLowdimDataset):
             max_train_episodes=None
         ):
         obs_keys = list(obs_keys)
-        rotation_transformer = RotationTransformer(
-            from_rep='axis_angle', to_rep=rotation_rep)
+
+        # Prevent instantation if not needed since pythorch3d is a heavy dependency and we want to avoid it if possible
+        rotation_transformer = None
+        if abs_action:
+            rotation_transformer = RotationTransformer(
+                from_rep='axis_angle', to_rep=rotation_rep)
 
         replay_buffer = ReplayBuffer.create_empty_numpy()
         with h5py.File(dataset_path) as file:
