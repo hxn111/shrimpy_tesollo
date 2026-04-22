@@ -62,7 +62,7 @@ class IsaacsimLowdimWrapper():
         self.GRIPPER_JOINT_NAMES = ['right_F1M1','right_F1M2','right_F1M3', 'right_F1M4','right_F2M1','right_F2M2',
                 'right_F2M3','right_F2M4','right_F3M1', 'right_F3M2','right_F3M3','right_F3M4']
 
-        self.robot_interface.start_loop() # TODO: SEE IF THIS NEEDS TO BE THREADED
+        # self.robot_interface.start_loop() # TODO: SEE IF THIS NEEDS TO BE THREADED
 
     def get_observation(self):
         # TODO: UN-HARDCODE
@@ -122,38 +122,38 @@ class IsaacsimLowdimWrapper():
         return None
 
 
-def test():
-    import robomimic.utils.file_utils as FileUtils
-    import robomimic.utils.env_utils as EnvUtils
-    from matplotlib import pyplot as plt
+# def test():
+#     import robomimic.utils.file_utils as FileUtils
+#     import robomimic.utils.env_utils as EnvUtils
+#     from matplotlib import pyplot as plt
 
-    dataset_path = '/home/cchi/dev/diffusion_policy/data/robomimic/datasets/square/ph/low_dim.hdf5'
-    env_meta = FileUtils.get_env_metadata_from_dataset(
-        dataset_path)
-
-
-    wrapper = IsaacsimLowdimWrapper(
-        # env=env,
-        obs_keys=[
-            'object', 
-            'robot0_eef_pos', 
-            'robot0_eef_quat', 
-            'robot0_gripper_qpos'
-        ]
-    )
-
-    states = list()
-    for _ in range(2):
-        wrapper.seed(0)
-        wrapper.reset()
-        states.append(wrapper.env.get_state()['states'])
-    assert np.allclose(states[0], states[1])
-
-    img = wrapper.render()
-    plt.imshow(img)
-    # wrapper.seed()
-    # states.append(wrapper.env.get_state()['states'])
+#     dataset_path = '/home/cchi/dev/diffusion_policy/data/robomimic/datasets/square/ph/low_dim.hdf5'
+#     env_meta = FileUtils.get_env_metadata_from_dataset(
+#         dataset_path)
 
 
-if __name__ == "__main__":
-    test()
+#     wrapper = IsaacsimLowdimWrapper(
+#         # env=env,
+#         obs_keys=[
+#             'object', 
+#             'robot0_eef_pos', 
+#             'robot0_eef_quat', 
+#             'robot0_gripper_qpos'
+#         ]
+#     )
+
+#     states = list()
+#     for _ in range(2):
+#         wrapper.seed(0)
+#         wrapper.reset()
+#         states.append(wrapper.env.get_state()['states'])
+#     assert np.allclose(states[0], states[1])
+
+#     img = wrapper.render()
+#     plt.imshow(img)
+#     # wrapper.seed()
+#     # states.append(wrapper.env.get_state()['states'])
+
+
+# if __name__ == "__main__":
+#     test()
