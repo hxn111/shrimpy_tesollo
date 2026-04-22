@@ -94,7 +94,8 @@ Make sure you run this in the container...
 Setup:
 ```bash
 cd /workspace/diffusion_policy
-conda install dill diffusers zarr pytorch3d "numpy==1.26" "numcodecs<0.16" pandas
+conda install dill diffusers zarr "numpy==1.26" "numcodecs<0.16" pandas 
+pip install av
 
 ```
 

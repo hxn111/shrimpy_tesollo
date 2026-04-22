@@ -10,7 +10,9 @@ from robot_motion_interface.isaacsim.isaacsim_interface import IsaacsimInterface
 
 
 ################################################################# TODO: IMPLEMENT THIS
-class IsaacsimLowdimWrapper():
+class IsaacsimLowdimWrapper(gym.Env):
+    metadata = {'render.modes': ['rgb_array']}
+
     def __init__(self, 
         # env: EnvRobosuite,
         obs_keys: List[str]=[

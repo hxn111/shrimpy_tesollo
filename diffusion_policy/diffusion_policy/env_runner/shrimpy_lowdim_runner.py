@@ -24,7 +24,6 @@ from diffusion_policy.env_runner.base_lowdim_runner import BaseLowdimRunner
 
 # TODO: EVERYTHING BELOW HERE
 from diffusion_policy.env.shrimpy.isaacsim_lowdim_wrapper import IsaacsimLowdimWrapper
-import robomimic.utils.file_utils as FileUtils
 # import robomimic.utils.env_utils as EnvUtils
 # import robomimic.utils.obs_utils as ObsUtils
 ################################################################
@@ -106,12 +105,10 @@ class ShrimpyLowdimRunner(BaseLowdimRunner):
         robosuite_fps = 20
         steps_per_render = max(robosuite_fps // fps, 1)
 
-        # read from dataset
-        env_meta = FileUtils.get_env_metadata_from_dataset(
-            dataset_path)
+        env_meta = {'env_name': 'Shrimpy'}
         rotation_transformer = None
         if abs_action:
-            env_meta['env_kwargs']['controller_configs']['control_delta'] = False
+            # env_meta['env_kwargs']['controller_configs']['control_delta'] = False
             rotation_transformer = RotationTransformer('axis_angle', 'rotation_6d')
 
         def env_fn():
@@ -209,8 +206,7 @@ class ShrimpyLowdimRunner(BaseLowdimRunner):
             env_prefixs.append('test/')
             env_init_fn_dills.append(dill.dumps(init_fn))
         
-        env = AsyncVectorEnv(env_fns)
-        # env = SyncVectorEnv(env_fns)
+        env = AsyncVectorEnv(env_fns, shared_memory=False) if env_fns else None
 
         self.env_meta = env_meta
         self.env = env
@@ -232,17 +228,18 @@ class ShrimpyLowdimRunner(BaseLowdimRunner):
         self.tqdm_interval_sec = tqdm_interval_sec
 
     def run(self, policy: BaseLowdimPolicy):
+        if self.env is None:
+            return {}
         log_data = {}
         def target():
-          nonlocal log_data                                                                                                                                                                       
-          log_data = self.run_in_thread(policy) 
-
+          nonlocal log_data
+          log_data = self.run_in_thread(policy)
 
         run_thread = threading.Thread(target=target)
         run_thread.start()
 
         self.env.start_loop()
-        
+
         run_thread.join()
         return log_data
 
@@ -324,6 +321,7 @@ class ShrimpyLowdimRunner(BaseLowdimRunner):
                 # step env
                 env_action = action
                 if self.abs_action:
+
                     env_action = self.undo_transform_action(action)
 
                 obs, reward, done, info = env.step(env_action)

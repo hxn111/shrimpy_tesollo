@@ -27,7 +27,8 @@ env_runner:
   n_train_vis: 0
 
   train_start_idx: 0
-  n_test: 50
+  # n_test: 50
+  n_test: 0
   n_test_vis: 4
   test_start_seed: 100000
   # use python's eval function as resolver, single-quoted string as argument
@@ -42,7 +43,7 @@ env_runner:
   abs_action: *abs_action
   tqdm_interval_sec: 1.0
   # n_envs: 28
-  n_envs: 0
+  # n_envs: 1
 
 dataset:
   _target_: diffusion_policy.dataset.robomimic_replay_lowdim_dataset.RobomimicReplayLowdimDataset
@@ -54,4 +55,5 @@ dataset:
   abs_action: *abs_action
   use_legacy_normalizer: False
   seed: 42
-  val_ratio: 0.02
+  # val_ratio: 0.02  # TODO: REVERT
+  val_ratio: 0.0
