@@ -1,6 +1,8 @@
 from typing import List, Dict, Optional
 import numpy as np
 import gym
+import threading
+import time
 from gym.spaces import Box
 from robomimic.envs.env_robosuite import EnvRobosuite
 from scipy.spatial.transform import Rotation
@@ -12,7 +14,6 @@ class IsaacsimLowdimWrapper():
     def __init__(self, 
         # env: EnvRobosuite,
         obs_keys: List[str]=[
-            'object', 
             'robot0_eef_pos', 
             'robot0_eef_quat', 
             'robot0_gripper_qpos'],
@@ -47,9 +48,9 @@ class IsaacsimLowdimWrapper():
             shape=low.shape,
             dtype=low.dtype
         )
-        obs_example = self.get_observation()
-        low = np.full_like(obs_example, fill_value=-1)
-        high = np.full_like(obs_example, fill_value=1)
+        OBS_DIM = 3 + 4 + 12  # eef_pos + eef_quat + gripper_qpos
+        low = np.full(OBS_DIM, fill_value=-1)
+        high = np.full(OBS_DIM, fill_value=1)
         self.observation_space = Box(
             low=low,
             high=high,
@@ -62,7 +63,17 @@ class IsaacsimLowdimWrapper():
         self.GRIPPER_JOINT_NAMES = ['right_F1M1','right_F1M2','right_F1M3', 'right_F1M4','right_F2M1','right_F2M2',
                 'right_F2M3','right_F2M4','right_F3M1', 'right_F3M2','right_F3M3','right_F3M4']
 
-        # self.robot_interface.start_loop() # TODO: SEE IF THIS NEEDS TO BE THREADED
+    def start_loop(self):
+        """Start the Isaac Sim loop. Must be called from the main thread (blocks until sim closes)."""
+        self.robot_interface.start_loop()
+
+    def wait_until_ready(self, timeout=120.0):
+        """Block caller until the simulation loop is initialized. Call from the worker thread."""
+        deadline = time.time() + timeout
+        while not self.robot_interface.check_loop():
+            if time.time() > deadline:
+                raise TimeoutError("IsaacSim loop did not start within timeout.")
+            time.sleep(0.1)
 
     def get_observation(self):
         # TODO: UN-HARDCODE
