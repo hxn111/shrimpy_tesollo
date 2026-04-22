@@ -85,7 +85,7 @@ class IsaacsimLowdimWrapper():
 
         
         names = self.robot_interface.joint_names()                 
-        pos = self.robot_interface.joint_state()[0::2]                                                                             
+        pos = self.robot_interface.joint_state()[:len(names)]                                                                            
         robot0_gripper_qpos = pos[[names.index(n) for n in self.GRIPPER_JOINT_NAMES]]
 
         

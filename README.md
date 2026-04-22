@@ -32,6 +32,8 @@ sudo docker compose -f compose.isaac.yaml run --rm isaac-base  # Opens TERMINAL 
 # TODO: ADD THIS TO DOCKER:
 pip install OneEuroFilter pygame 
 pip install -e sensor_interface_py
+pip uninstall numpy
+conda install numpy==1.26
 # pip install "numpy<2"
 ```
 

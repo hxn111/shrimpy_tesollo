@@ -7,8 +7,8 @@ Recording is automatic:
   Ctrl-C             → saves in-progress episode and exits
 
 Per-step recording:
-  obs    : 38 joint positions from joint_state()[:38]  (state BEFORE command)
-  action : 38 joint-position targets from _joint_positions[0]  (command just written)
+  obs    : 19-dim  [eef_pos(3), eef_quat(4), gripper_qpos(12)]  (state BEFORE command)
+  action : 18-dim  [eef_pos(3), eef_rpy(3),  gripper_qpos(12)]  (command just sent)
 """
 
 from robot_motion_interface.isaacsim.isaacsim_interface import IsaacsimInterface
@@ -25,6 +25,7 @@ import signal
 from pathlib import Path
 
 from OneEuroFilter import OneEuroFilter
+from scipy.spatial.transform import Rotation
 import numpy as np
 import cv2
 import pygame
@@ -33,9 +34,15 @@ from loguru import logger
 from enum import Enum
 
 
-N_JOINTS = 38  # 14 panda arm joints + 24 Tesollo gripper joints
 HAND_ABSENT_TIMEOUT = 15  # frames (~0.5 s at 30 fps) before episode is saved
 DEMO_SAVE_DIR = Path(__file__).parent / "data" / "isaacsim_demos"
+
+EE_FRAME = 'right_delto_offset_link'
+GRIPPER_JOINT_NAMES = [
+    'right_F1M1', 'right_F1M2', 'right_F1M3', 'right_F1M4',
+    'right_F2M1', 'right_F2M2', 'right_F2M3', 'right_F2M4',
+    'right_F3M1', 'right_F3M2', 'right_F3M3', 'right_F3M4',
+]
 
 
 class Hand(Enum):
@@ -52,16 +59,29 @@ def _episode_count(save_dir: Path) -> int:
 
 
 def _save_episode(obs_buf: list, act_buf: list, save_dir: Path) -> int:
+    print("obs:", obs_buf)
+    print("act:", act_buf)
     if not obs_buf:
         return _episode_count(save_dir)
     save_dir.mkdir(parents=True, exist_ok=True)
     idx = _episode_count(save_dir)
     path = save_dir / f"episode_{idx:04d}.npz"
     np.savez(path,
-             obs=np.array(obs_buf, dtype=np.float32),      # (T, 38)
-             actions=np.array(act_buf, dtype=np.float32))  # (T, 38)
+             obs=np.array(obs_buf, dtype=np.float32),      # (T, 19)
+             actions=np.array(act_buf, dtype=np.float32))  # (T, 18)
     print(f"[demo] saved {len(obs_buf)} steps → {path}")
     return idx + 1
+
+
+def _get_obs(robot_interface: Interface) -> np.ndarray:
+    """Returns 19-dim obs: [eef_pos(3), eef_quat(4), gripper_qpos(12)]."""
+    eef_pose = robot_interface.cartesian_pose([EE_FRAME])[0][0]
+    eef_pos  = eef_pose[:3]
+    eef_quat = eef_pose[3:]
+    names = robot_interface.joint_names()
+    pos = robot_interface.joint_state()[:len(names)]   
+    gripper_qpos = pos[[names.index(n) for n in GRIPPER_JOINT_NAMES]]
+    return np.concatenate([eef_pos, eef_quat, gripper_qpos]).astype(np.float32)
 
 
 # ──────────────────────────────────────────────────────────
@@ -85,6 +105,7 @@ def scale_and_set_poses(hand: Hand, unscaled_wrist_pose: np.ndarray,
                 ['right_F1M1', 'right_F1M2', 'right_F1M3', 'right_F1M4',
                  'right_F2M1', 'right_F2M2', 'right_F2M3', 'right_F2M4',
                  'right_F3M1', 'right_F3M2', 'right_F3M3', 'right_F3M4'])
+    return scaled_wrist_pose
 
 
 def joint_pos_to_robot_pos(joint_pos: np.ndarray, retargeter) -> np.ndarray:
@@ -180,17 +201,17 @@ def retargeting(frame_queue: queue.Queue, stop_event, camera, hand: Hand,
             wrist_pose = np.concatenate([xyz, [0.707, 0.707, 0, 0]])
             gripper_pos = joint_pos_to_robot_pos(joint_pos, retargeter)
 
-            # Obs = joint positions BEFORE this command is applied
-            cur_state = robot_interface.joint_state()
-            sim_ready = cur_state is not None and robot_interface._joint_positions is not None
+            # Obs = [eef_pos(3), eef_quat(4), gripper_qpos(12)] BEFORE command
+            sim_ready = robot_interface.joint_state() is not None
             if sim_ready:
-                obs_before = cur_state[:N_JOINTS].astype(np.float32)
+                obs_before = _get_obs(robot_interface)
 
-            scale_and_set_poses(hand, wrist_pose, gripper_pos, robot_interface, wrist_filters)
+            scaled_wrist_pose = scale_and_set_poses(hand, wrist_pose, gripper_pos, robot_interface, wrist_filters)
 
-            # Action = what was just written to the interface
+            # Action = [eef_pos(3), eef_rpy(3), gripper_qpos(12)] — matches IsaacsimLowdimWrapper.step()
             if sim_ready:
-                action = robot_interface._joint_positions.detach().cpu().numpy()[0].astype(np.float32)
+                ee_rpy = Rotation.from_quat(scaled_wrist_pose[3:]).as_euler('xyz').astype(np.float32)
+                action = np.concatenate([scaled_wrist_pose[:3], ee_rpy, gripper_pos]).astype(np.float32)
                 obs_buf.append(obs_before)
                 act_buf.append(action)
 
