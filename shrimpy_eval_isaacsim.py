@@ -60,7 +60,7 @@ def main(input,
         policy.eval().to(device)
 
         # set inference params
-        # policy.num_inference_steps = 16 # DDIM inference iterations # Use default (8)
+        policy.num_inference_steps = 16 # DDIM inference iterations # Use default (8)
         policy.n_action_steps = policy.horizon - policy.n_obs_steps + 1
 
     else:
