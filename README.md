@@ -107,6 +107,15 @@ python train.py --config-name=train_diffusion_unet_lowdim_workspace task=shrimpy
 HYDRA_FULL_ERROR=1 python train.py --config-name=train_diffusion_unet_lowdim_workspace task=shrimpy_lowdim
 ```
 
+Evaluation:
+```bash
+
+python shrimpy_eval_isaacsim.py --input diffusion_policy/data/outputs/2026.04.23/20.16.47_train_diffusion_unet_lowdim_shrimpy_lowdim/checkpoints/latest.ckpt 
+
+
+python shrimpy_eval_isaacsim.py --input "diffusion_policy/data/outputs/2026.04.22/23.20.19_train_diffusion_unet_lowdim_shrimpy_lowdim/checkpoints/latest.ckpt"
+```
+
 ## Utils
 * Visualizing URDF:
     ```bash
