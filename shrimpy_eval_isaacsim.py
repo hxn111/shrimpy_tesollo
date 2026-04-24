@@ -62,7 +62,8 @@ def main(input,
         # set inference params
         policy.num_inference_steps = 16 # DDIM inference iterations # Use default (8)
         policy.n_action_steps = policy.horizon - policy.n_obs_steps + 1
-
+        # Actions are unnormalized euler angles (up to ±π), so clip_sample would corrupt them
+        policy.noise_scheduler.register_to_config(clip_sample=False)
     else:
         raise RuntimeError("Unsupported policy type: ", cfg.name)
 
@@ -105,7 +106,7 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
         if time.time() > deadline:
             raise TimeoutError("Robot state not available within timeout")
         time.sleep(0.1)
-        ###################################################
+    ###################################################
 
 
     obs_history = deque(maxlen=n_obs_steps)
@@ -143,6 +144,7 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
                 
 
                 for i in range(action.shape[0]):
+                    
 
                     # Action shape: (18,)
                     ee_pos        = action[i][:3]          # (3,)
@@ -151,6 +153,14 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
 
                     ee_quat = Rotation.from_euler('xyz', ee_rpy).as_quat()  # (4,) xyzw
                     ee_pose = np.concatenate([ee_pos, ee_quat])              # (7,)
+                    
+
+                    print("ee_pos", ee_pos)
+                    print("ee_rpy:",  ee_rpy)
+                    print("gripper_qpos:",  gripper_qpos)
+
+                    print("ee_quat", ee_quat)
+                    print("ee_pose", ee_pose)
 
                     # Then sent to the Isaacsim:
                     robot_interface.set_cartesian_pose([ee_pose], [EE_FRAME])

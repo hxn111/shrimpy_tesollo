@@ -99,9 +99,21 @@ pip install av
 
 ```
 
-Running:
+Collecting Data:
 ```bash
+python3 shrimpy_col_data.py
 
+```
+
+npz to hdf5 conversion script:
+```bash
+python convert_npz_to_hdf5.py --input data/isaacsim_demos --output diffusion_policy/shrimpy_data/isaacsim_demos_converted/low_dim.hdf5
+
+```
+
+Training:
+```bash
+cd diffusion_policy
 python train.py --config-name=train_diffusion_unet_lowdim_workspace task=shrimpy_lowdim
 
 HYDRA_FULL_ERROR=1 python train.py --config-name=train_diffusion_unet_lowdim_workspace task=shrimpy_lowdim
@@ -109,11 +121,7 @@ HYDRA_FULL_ERROR=1 python train.py --config-name=train_diffusion_unet_lowdim_wor
 
 Evaluation:
 ```bash
-
-python shrimpy_eval_isaacsim.py --input diffusion_policy/data/outputs/2026.04.23/20.16.47_train_diffusion_unet_lowdim_shrimpy_lowdim/checkpoints/latest.ckpt 
-
-
-python shrimpy_eval_isaacsim.py --input "diffusion_policy/data/outputs/2026.04.22/23.20.19_train_diffusion_unet_lowdim_shrimpy_lowdim/checkpoints/latest.ckpt"
+python shrimpy_eval_isaacsim.py --input "diffusion_policy/data/outputs/2026.04.23/22.50.46_train_diffusion_unet_lowdim_shrimpy_lowdim/checkpoints/epoch=2550-train_loss=0.002.ckpt"
 ```
 
 ## Utils
