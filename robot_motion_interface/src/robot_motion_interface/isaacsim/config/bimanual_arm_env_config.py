@@ -48,7 +48,7 @@ class BimanualArmSceneCfg(InteractiveSceneCfg):
         prim_path="/World/DomeLight",
         spawn=sim_utils.DomeLightCfg(
             color=(0.92, 0.95, 1.0),  # cool
-            intensity=700.0,
+            intensity=200.0,
         ),
     )
 
@@ -57,8 +57,8 @@ class BimanualArmSceneCfg(InteractiveSceneCfg):
         prim_path="/World/SunLight",
         spawn=sim_utils.DistantLightCfg(
             color=(1.0, 0.97, 0.9),  # warm
-            intensity=800.0,
-            angle=50.0,
+            intensity=2000.0,
+            angle=1.0,
         ),
     )
 

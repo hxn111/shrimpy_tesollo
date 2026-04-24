@@ -11,7 +11,8 @@ Per-step recording:
   action : 18-dim  [eef_pos(3), eef_rpy(3),  gripper_qpos(12)]  (command just sent)
 """
 
-from robot_motion_interface.isaacsim.isaacsim_interface import IsaacsimInterface
+from robot_motion_interface.isaacsim.isaacsim_object_interface import IsaacsimObjectInterface, Object
+
 from robot_motion_interface.interface import Interface
 from sensor_interface.camera.realsense_interface import RealsenseInterface
 
@@ -129,7 +130,7 @@ def produce_frame(frame_queue: queue.Queue, stop_event, camera, use_realsense: b
                 frame = camera.latest()
                 color, depth = frame.color, frame.depth
             except RuntimeError:
-                print("WARNING: No frame from Realsense.")
+                # print("WARNING: No frame from Realsense.")
                 continue
         time.sleep(1 / 30.0)
         try:
@@ -273,6 +274,11 @@ def start_threading(robot_interface, hand_type, camera_path,
 
     signal.signal(signal.SIGINT, handle_sigint)
     if robot_interface:
+        # Initiate objects
+        cube_0 = Object(handle="cube", pose=[0.1, 0.2, 0.95, 0,0,0,1])
+        cube_1 = Object(handle="cube_1", pose=[0.1, 0, 0.95, 0,0,0,1])
+        robot_interface.place_objects([cube_0, cube_1])
+
         robot_interface.start_loop()
 
 
@@ -290,7 +296,7 @@ def main():
         / "camera" / "config" / "realsense_config.yaml"
     )
 
-    robot_interface = IsaacsimInterface.from_yaml(CONFIG_PATH)
+    robot_interface = IsaacsimObjectInterface.from_yaml(CONFIG_PATH)
     start_threading(robot_interface, HAND_TYPE, None,
                     RETARGET_CONFIG_PATH, RETARGET_URDF_DIR, CAMERA_CONFIG_PATH)
 
