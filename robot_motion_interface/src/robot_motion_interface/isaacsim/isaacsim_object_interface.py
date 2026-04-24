@@ -306,6 +306,39 @@ class IsaacsimObjectInterface(IsaacsimInterface):
         self._object_poses = new_poses  # atomic swap — reader threads always see a complete dict
 
 
+    def _post_env_creation(self, env: "ManagerBasedEnv"):
+        """
+        (Hook) Called after environment creation. Sets up EE arrow marker and caches EE body index.
+        """
+        super()._post_env_creation(env)
+
+        from isaaclab.markers import VisualizationMarkers, VisualizationMarkersCfg
+        from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
+        import isaaclab.sim as sim_utils_local
+
+        arrow_cfg = VisualizationMarkersCfg(
+            prim_path="/Visuals/ee_arrow",
+            markers={
+                "arrow": sim_utils_local.UsdFileCfg(
+                    usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/UIElements/arrow_x.usd",
+                    scale=(0.05, 0.02, 0.2),
+                    visual_material=sim_utils_local.PreviewSurfaceCfg(diffuse_color=(0.0, 1.0, 0.0)),
+                )
+            },
+        )
+        self._ee_marker = VisualizationMarkers(arrow_cfg)
+
+        # Cache both EE body indices (left=0, right=1 per isaacsim_config.yaml)
+        robot = env.scene.articulations["robot"]
+        body_names = list(robot.data.body_names)
+        self._ee_body_indices = [body_names.index(f) for f in self._ee_frames]
+
+        # Quaternion (w,x,y,z) repeated for both arms: Ry +90° rotates +X → -Z (point down)
+        self._arrow_down_quats = torch.tensor(
+            [[0.7071, 0.0, 0.7071, 0.0]] * len(self._ee_frames),
+            device=env.device, dtype=torch.float32
+        )
+
     def _setup_env_cfg(self, args_cli: argparse.Namespace) -> "ManagerBasedEnvCfg":
         """
         (Hook) Creates and configures the environment
@@ -349,7 +382,13 @@ class IsaacsimObjectInterface(IsaacsimInterface):
 
         # Log poses
         self._record_object_poses()
-        
+
+        # Update green EE arrows for both arms
+        robot = env.scene.articulations["robot"]
+        ee_positions = torch.stack(
+            [robot.data.body_state_w[0, idx, :3] for idx in self._ee_body_indices]
+        )  # (2, 3)
+        self._ee_marker.visualize(ee_positions, self._arrow_down_quats)
 
 
 if __name__ == "__main__":

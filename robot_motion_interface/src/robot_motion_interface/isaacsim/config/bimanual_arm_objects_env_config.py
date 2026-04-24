@@ -1,10 +1,13 @@
-from robot_motion_interface.isaacsim.config.bimanual_arm_env_config import BimanualArmSceneCfg, ActionsCfg, ObservationsCfg, EventCfg  
+from robot_motion_interface.isaacsim.config.bimanual_arm_env_config import BimanualArmSceneCfg, ActionsCfg, ObservationsCfg, EventCfg
 
 from isaaclab.envs import ManagerBasedEnvCfg
 from isaaclab.assets import RigidObjectCfg, AssetBaseCfg
 
 from isaaclab.utils import configclass
+from isaaclab.managers import TerminationTermCfg as DoneTerm
+import isaaclab.envs.mdp as mdp
 import isaaclab.sim as sim_utils
+import torch
 
 from pathlib import Path
 
@@ -199,7 +202,7 @@ class BimanualArmObjectSceneCfg(BimanualArmSceneCfg):
     cube = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/cube",
         spawn=sim_utils.CuboidCfg(
-            size=(0.03, 0.03, 0.05 ),
+            size=(0.04, 0.06, 0.05),
             mass_props = sim_utils.MassPropertiesCfg(mass=0.1),
             rigid_props = sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True, kinematic_enabled=False),
             collision_props=sim_utils.CollisionPropertiesCfg(collision_enabled=True),
@@ -211,12 +214,13 @@ class BimanualArmObjectSceneCfg(BimanualArmSceneCfg):
             visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.0, 0.0, 1.0)),
             visible=False,
         ),
+        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.1, 0.2, 0.962)),
     )
 
     cube_1 = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/cube_1",
         spawn=sim_utils.CuboidCfg(
-            size=(0.03, 0.03, 0.05 ),
+            size=(0.06, 0.06, 0.03),
             mass_props = sim_utils.MassPropertiesCfg(mass=0.1),
             rigid_props = sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True, kinematic_enabled=False),
             collision_props=sim_utils.CollisionPropertiesCfg(collision_enabled=True),
@@ -228,6 +232,7 @@ class BimanualArmObjectSceneCfg(BimanualArmSceneCfg):
             visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(1.0, 0.0, 0.0)),
             visible=False,
         ),
+        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.1, 0.0, 0.952)),
     )
     cube_2 = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/cube_2",
@@ -318,6 +323,27 @@ class BimanualArmObjectSceneCfg(BimanualArmSceneCfg):
 # ######################################################################
 
 
+def cube_out_of_table(env, min_height: float = 0.85) -> torch.Tensor:
+    """Terminate when the cube falls below the table surface (z < min_height)."""
+    cube = env.scene["cube"]
+    return cube.data.root_state_w[:, 2] < min_height
+
+
+def timeout_unless_grasped(env, min_grasp_height: float = 0.99) -> torch.Tensor:
+    """Timeout reset only if the cube has NOT been lifted off the table.
+    If the cube is up in the air (being grasped), hold off the reset."""
+    cube = env.scene["cube"]
+    cube_not_lifted = cube.data.root_state_w[:, 2] < min_grasp_height
+    return mdp.time_out(env) & cube_not_lifted
+
+
+@configclass
+class ObjectTerminationsCfg:
+    """Reset on timeout (only if cube not grasped) OR if the cube falls off the table."""
+    timeout = DoneTerm(func=timeout_unless_grasped, time_out=True, params={"min_grasp_height": 0.99})
+    cube_fell = DoneTerm(func=cube_out_of_table, params={"min_height": 0.85})
+
+
 @configclass
 class BimanualArmObjectEnvCfg(ManagerBasedEnvCfg):
     """Configuration for the Bimanual Arm environment."""
@@ -326,6 +352,7 @@ class BimanualArmObjectEnvCfg(ManagerBasedEnvCfg):
     observations = ObservationsCfg()
     actions = ActionsCfg()
     events = EventCfg()
+    terminations = ObjectTerminationsCfg()
 
     def __post_init__(self):
         """Post initialization."""
@@ -334,3 +361,4 @@ class BimanualArmObjectEnvCfg(ManagerBasedEnvCfg):
         self.decimation = 1
         self.sim.dt = 0.005
         self.sim.render_interval = 0.02 / self.sim.dt  # 50 FPS
+        self.episode_length_s = 20.0  # 20s per episode — resets unless cube is actively being held
