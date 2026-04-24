@@ -229,6 +229,10 @@ def retargeting(frame_queue: queue.Queue, stop_event, camera, hand: Hand,
                     obs_buf, act_buf = [], []
                     frames_without_hand = 0
 
+                    # Reset objects
+                    robot_interface.move_object("cube", [0.1, 0.2, 0.95, 0,0,0,1])
+                    robot_interface.move_object("cube_1", [0.1, 0, 0.95, 0,0,0,1])
+
         # Display
         if depth is not None:
             d8 = cv2.normalize(depth, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
