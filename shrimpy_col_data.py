@@ -68,21 +68,26 @@ def _save_episode(obs_buf: list, act_buf: list, save_dir: Path) -> int:
     idx = _episode_count(save_dir)
     path = save_dir / f"episode_{idx:04d}.npz"
     np.savez(path,
-             obs=np.array(obs_buf, dtype=np.float32),      # (T, 19)
+             obs=np.array(obs_buf, dtype=np.float32),      # (T, 33)
              actions=np.array(act_buf, dtype=np.float32))  # (T, 18)
     print(f"[demo] saved {len(obs_buf)} steps → {path}")
     return idx + 1
 
 
 def _get_obs(robot_interface: Interface) -> np.ndarray:
-    """Returns 19-dim obs: [eef_pos(3), eef_quat(4), gripper_qpos(12)]."""
+    """Returns 33-dim obs: [object(14), eef_pos(3), eef_quat(4), gripper_qpos(12)]."""
+
+    cube_0_pose = robot_interface.get_object_pose("cube")
+    cube_1_pose = robot_interface.get_object_pose("cube_1")
+    objects = np.concatenate([cube_0_pose, cube_1_pose])
+
     eef_pose = robot_interface.cartesian_pose([EE_FRAME])[0][0]
     eef_pos  = eef_pose[:3]
     eef_quat = eef_pose[3:]
     names = robot_interface.joint_names()
     pos = robot_interface.joint_state()[:len(names)]   
     gripper_qpos = pos[[names.index(n) for n in GRIPPER_JOINT_NAMES]]
-    return np.concatenate([eef_pos, eef_quat, gripper_qpos]).astype(np.float32)
+    return np.concatenate([objects, eef_pos, eef_quat, gripper_qpos]).astype(np.float32)
 
 
 # ──────────────────────────────────────────────────────────
@@ -148,6 +153,17 @@ def produce_frame(frame_queue: queue.Queue, stop_event, camera, use_realsense: b
 
 def retargeting(frame_queue: queue.Queue, stop_event, camera, hand: Hand,
                 robot_interface: Interface, config_path, urdf_path):
+    
+    if robot_interface:
+        # Initiate objects
+        deadline = time.time() + 120.0
+        while not robot_interface.check_loop():
+            if time.time() > deadline:
+                raise TimeoutError("IsaacSim did not start within timeout")
+            time.sleep(0.1)
+        cube_0 = Object(handle="cube", pose=[0.1, 0.2, 0.95, 0,0,0,1])
+        cube_1 = Object(handle="cube_1", pose=[0.1, 0, 0.95, 0,0,0,1])
+        robot_interface.place_objects([cube_0, cube_1])
 
     detector = SingleHandDetector(hand_type=hand.value, selfie=False)
     RetargetingConfig.set_default_urdf_dir(str(urdf_path))
@@ -261,7 +277,11 @@ def start_threading(robot_interface, hand_type, camera_path,
     else:
         camera = cv2.VideoCapture(0 if camera_path is None else camera_path)
 
+
     frame_queue = queue.Queue(maxsize=1)
+
+
+
     threading.Thread(target=produce_frame,
                      args=(frame_queue, stop_event, camera, use_realsense),
                      daemon=True).start()
@@ -278,11 +298,6 @@ def start_threading(robot_interface, hand_type, camera_path,
 
     signal.signal(signal.SIGINT, handle_sigint)
     if robot_interface:
-        # Initiate objects
-        cube_0 = Object(handle="cube", pose=[0.1, 0.2, 0.95, 0,0,0,1])
-        cube_1 = Object(handle="cube_1", pose=[0.1, 0, 0.95, 0,0,0,1])
-        robot_interface.place_objects([cube_0, cube_1])
-
         robot_interface.start_loop()
 
 

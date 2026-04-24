@@ -6,7 +6,7 @@ Usage:
 
 
 from shrimpy_col_data import _get_obs, EE_FRAME, GRIPPER_JOINT_NAMES
-from robot_motion_interface.isaacsim.isaacsim_interface import IsaacsimInterface
+from robot_motion_interface.isaacsim.isaacsim_object_interface import IsaacsimObjectInterface, Object
 
 from scipy.spatial.transform import Rotation
 import threading
@@ -81,7 +81,7 @@ def main(input,
     CONFIG_PATH = Path(__file__).parent / "robot_motion_interface" / "config" / "isaacsim_config.yaml"
       
     sys.argv = sys.argv[:1]  # Click already parsed our args; hide them from Isaac Sim's argparse
-    robot_interface = IsaacsimInterface.from_yaml(CONFIG_PATH)
+    robot_interface = IsaacsimObjectInterface.from_yaml(CONFIG_PATH)
 
     ################################################
 
@@ -99,10 +99,17 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
          if time.time() > deadline:
              raise TimeoutError("IsaacSim did not start within timeout")
          time.sleep(0.1)
-
-    # Wait for robot state to be populated
+    
+    # Initiate objects
+    cube_0 = Object(handle="cube", pose=[0.1, 0.2, 0.95, 0,0,0,1])
+    cube_1 = Object(handle="cube_1", pose=[0.1, 0, 0.95, 0,0,0,1])
+    robot_interface.place_objects([cube_0, cube_1])
+    
+    # Wait for robot state and object poses to be populated
     deadline = time.time() + 30.0
-    while robot_interface.joint_state() is None:
+    while (robot_interface.joint_state() is None
+           or "cube" not in robot_interface.get_object_poses()
+           or "cube_1" not in robot_interface.get_object_poses()):
         if time.time() > deadline:
             raise TimeoutError("Robot state not available within timeout")
         time.sleep(0.1)
@@ -135,8 +142,8 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
                 with torch.no_grad():
                     s = time.time()
 
-                    obs_seq = np.stack(list(obs_history), axis=0)  # (n_obs_steps, 19)
-                    obs_dict = {'obs': torch.from_numpy(obs_seq).unsqueeze(0).to(device)}  # (1, 2, 19)
+                    obs_seq = np.stack(list(obs_history), axis=0)  # (n_obs_steps, 33)
+                    obs_dict = {'obs': torch.from_numpy(obs_seq).unsqueeze(0).to(device)}  # (1, 2, 33)
                     result = policy.predict_action(obs_dict)
                     # This action starts from the first obs step
                     action = result['action'][0].detach().to('cpu').numpy()

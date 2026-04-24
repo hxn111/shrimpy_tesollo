@@ -282,9 +282,9 @@ class IsaacsimObjectInterface(IsaacsimInterface):
         """
 
         if self.env is None:
-            return 
+            return
 
-        self._object_poses = {}
+        new_poses = {}
 
         for obj in self._initialized_objects:
             handle = obj.handle
@@ -298,10 +298,12 @@ class IsaacsimObjectInterface(IsaacsimInterface):
             # Isaac Sim root pose is [x, y, z, qw, qx, qy, qz]
             root_pose = sim_obj.data.root_state_w[0, :7].cpu().numpy()
 
-            self._object_poses[handle] = np.array([
+            new_poses[handle] = np.array([
                 root_pose[0], root_pose[1], root_pose[2],  # x, y, z
                 root_pose[4], root_pose[5], root_pose[6], root_pose[3],  # qx, qy, qz, qw
             ])
+
+        self._object_poses = new_poses  # atomic swap — reader threads always see a complete dict
 
 
     def _setup_env_cfg(self, args_cli: argparse.Namespace) -> "ManagerBasedEnvCfg":
