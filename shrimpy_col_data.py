@@ -130,7 +130,7 @@ def scale_and_set_poses(hand: Hand, unscaled_wrist_pose: np.ndarray,
         # target_x = target_pose[0]
         # target_y = target_pose[1]
 
-        # if np.linalg.norm(np.abs(scaled_wrist_pose[:2] - target_pose[:2])) <= LOCK_DISTANCE:
+        # if (np.linalg.norm(np.abs(scaled_wrist_pose[:2] - target_pose[:2])) <= LOCK_DISTANCE):
         #     scaled_wrist_pose[0] = target_x
         #     scaled_wrist_pose[1] = target_y
 
