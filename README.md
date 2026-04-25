@@ -96,6 +96,7 @@ Setup:
 cd /workspace/diffusion_policy
 conda install dill diffusers zarr "numpy==1.26" "numcodecs<0.16" pandas 
 pip install av
+pip install -e diffusion_policy
 
 ```
 
@@ -125,7 +126,8 @@ HYDRA_FULL_ERROR=1 python train.py --config-name=train_diffusion_unet_lowdim_wor
 Evaluation:
 ```bash
 cd /workspace
-python shrimpy_eval_isaacsim.py --input diffusion_policy/data/outputs/2026.04.23/22.50.46_train_diffusion_unet_lowdim_shrimpy_lowdim/checkpoints/epoch=2550-train_loss=0.002.ckpt
+
+python shrimpy_eval_isaacsim.py --input epoch=0500-train_loss=0.005.ckpt
 ```
 
 ## Utils

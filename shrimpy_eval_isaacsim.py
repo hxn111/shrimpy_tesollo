@@ -101,8 +101,8 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
          time.sleep(0.1)
     
     # Initiate objects
-    cube_0 = Object(handle="cube", pose=[0.1, 0.2, 0.95, 0,0,0,1])
-    cube_1 = Object(handle="cube_1", pose=[0.1, 0, 0.95, 0,0,0,1])
+    cube_0 = Object(handle="cube", pose=[0.1, 0.1, 0.95, 0,0,0,1])
+    cube_1 = Object(handle="cube_1", pose=[0.1, -0.1, 0.95, 0,0,0,1])
     robot_interface.place_objects([cube_0, cube_1])
     
     # Wait for robot state and object poses to be populated
