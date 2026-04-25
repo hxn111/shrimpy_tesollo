@@ -35,7 +35,7 @@ from loguru import logger
 from enum import Enum
 
 
-HAND_ABSENT_TIMEOUT = 15  # frames (~0.5 s at 30 fps) before episode is saved
+HAND_ABSENT_TIMEOUT = 60  # frames (~0.5 s at 30 fps) before episode is saved
 DEMO_SAVE_DIR = Path(__file__).parent / "data" / "isaacsim_demos"
 
 EE_FRAME = 'right_delto_offset_link'
@@ -94,16 +94,35 @@ def _get_obs(robot_interface: Interface) -> np.ndarray:
 # Unchanged from isaacsim_shrimpy.py
 # ──────────────────────────────────────────────────────────
 
+# Height-sensitive XY scale thresholds
+HEIGHT_FINE_Z   = 0.20   # at or below → fine-control mode (smallest XY scale)
+HEIGHT_COARSE_Z = 0.40   # at or above → coarse mode (original XY scale)
+X_SCALE_FINE,   X_SCALE_COARSE = 0.75, 1.5
+Y_SCALE_FINE,   Y_SCALE_COARSE = 1.00, 2.0
+
 def scale_and_set_poses(hand: Hand, unscaled_wrist_pose: np.ndarray,
                         gripper_pos: np.ndarray, robot_interface: Interface,
                         wrist_filter):
     scaled_wrist_pose = unscaled_wrist_pose.copy()
     if hand == Hand.RIGHT:
-        scaled_wrist_pose[0] = -scaled_wrist_pose[0] * 1.5 + 0.1
-        scaled_wrist_pose[1] = -scaled_wrist_pose[1] * 2
+        # scaled_wrist_pose[0] = -scaled_wrist_pose[0] * 1.5 + 0.1                                                                                                                   
+        # scaled_wrist_pose[1] = -scaled_wrist_pose[1] * 2
+         
+        # Z fixed at 2× so the arm can reach any height; use it to drive XY gain.
         scaled_wrist_pose[2] *= 2
+        blend = float(np.clip(
+            (scaled_wrist_pose[2] - HEIGHT_FINE_Z) / (HEIGHT_COARSE_Z - HEIGHT_FINE_Z),
+            0.0, 1.0))
+        x_scale = X_SCALE_FINE + blend * (X_SCALE_COARSE - X_SCALE_FINE)
+        y_scale = Y_SCALE_FINE + blend * (Y_SCALE_COARSE - Y_SCALE_FINE)
+        scaled_wrist_pose[0] = -unscaled_wrist_pose[0] * x_scale + 0.1
+        scaled_wrist_pose[1] = -unscaled_wrist_pose[1] * y_scale
+
+         
         filtered_wrist_xyz = np.array([f(v) for f, v in zip(wrist_filter, scaled_wrist_pose[:3])])
         scaled_wrist_pose[:3] = filtered_wrist_xyz
+
+        scaled_wrist_pose[2] = max(scaled_wrist_pose[2], 1.05)  # Prevent collision with table
         if robot_interface:
             robot_interface.set_cartesian_pose([scaled_wrist_pose], ['right_delto_offset_link'])
             robot_interface.set_joint_positions(
