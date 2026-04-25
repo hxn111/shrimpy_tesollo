@@ -34,21 +34,24 @@
 
    <link name="F1_CONTACT"/>                                                                                                                                                                                                                                                                          
    <joint name="CONTACT1" type="fixed">                                                                                                                                                                                                                                                               
-      <origin xyz="0.065 0.0 0.0" rpy="1.5708 0 1.5708"/>                                                                                                                                                                                                                                                        
+      <!-- <origin xyz="0.065 0.0 0.0" rpy="1.5708 0 1.5708"/> -->
+      <origin xyz="0.065 0.0 0.0" rpy="-1.57 0 0"/>                                                                                                                                                                                                                                                        -->
       <parent link="F1_TIP"/>                                                                                                                                                                                                                                                                           
       <child link="F1_CONTACT"/>                                                                                                                                                                                                                                                                       
    </joint>                                                                                                                                                                                                                                                                                           
                                                                                                                                                                                                                                                                                                       
    <link name="F2_CONTACT"/>                                                                                                                                                                                                                                                                          
    <joint name="CONTACT2" type="fixed">                                                                                                                                                                                                                                                               
-      <origin xyz="0.065 0.0 0.0" rpy="1.5708 0 1.5708"/>
+      <!-- <origin xyz="0.065 0.0 0.0" rpy="1.5708 0 1.5708"/> -->
+      <origin xyz="0.065 0.0 0.0" rpy="1.5708 0 1.5708"/> 
       <parent link="F2_TIP"/>                                                                                                                                                                                                                                                                           
       <child link="F2_CONTACT"/>                                                                                                                                                                                                                                                                     
    </joint>
                                                                                                                                                                                                                                                                                                       
    <link name="F3_CONTACT"/>
    <joint name="CONTACT3" type="fixed">                                                                                                                                                                                                                                                               
-      <origin xyz="0.065 0.0 0.0" rpy="1.5708 0 1.5708"/>                                                                                                                                                                                                                                                      
+      <!-- <origin xyz="0.065 0.0 0.0" rpy="1.5708 0 1.5708"/>      -->
+      <origin xyz="0.065 0.0 0.0" rpy="1.5708 0 1.5708"/>                                                                                                                                                                                                                                                  --> -->
       <parent link="F3_TIP"/>                
       <child link="F3_CONTACT"/>
    </joint>

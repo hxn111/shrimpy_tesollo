@@ -123,6 +123,30 @@ def scale_and_set_poses(hand: Hand, unscaled_wrist_pose: np.ndarray,
         scaled_wrist_pose[:3] = filtered_wrist_xyz
 
         scaled_wrist_pose[2] = max(scaled_wrist_pose[2], 1.05)  # Prevent collision with table
+
+        # "LOCK" x an y position to cube when near
+        # LOCK_DISTANCE = 0.05
+        # target_pose = robot_interface.get_object_pose("cube") # TODO: PASS THIS INTO FUNCTION
+        # target_x = target_pose[0]
+        # target_y = target_pose[1]
+
+        # if np.linalg.norm(np.abs(scaled_wrist_pose[:2] - target_pose[:2])) <= LOCK_DISTANCE:
+        #     scaled_wrist_pose[0] = target_x
+        #     scaled_wrist_pose[1] = target_y
+
+        # Fix gripper pose to be parallel
+        # gripper_pos[0] = 0.0
+        # gripper_pos[4] = 0.0
+        # gripper_pos[8] = 0.0
+
+        # print("GRIPPER[3] POS:", gripper_pos[3])
+
+        # if  gripper_pos[3] < 0.9:
+        #     gripper_pos[2] = 0.7
+        #     gripper_pos[6] = 0.7
+        #     gripper_pos[10] = 0.7
+
+
         if robot_interface:
             robot_interface.set_cartesian_pose([scaled_wrist_pose], ['right_delto_offset_link'])
             robot_interface.set_joint_positions(
@@ -180,8 +204,8 @@ def retargeting(frame_queue: queue.Queue, stop_event, camera, hand: Hand,
             if time.time() > deadline:
                 raise TimeoutError("IsaacSim did not start within timeout")
             time.sleep(0.1)
-        cube_0 = Object(handle="cube", pose=[0.1, 0.2, 0.95, 0,0,0,1])
-        cube_1 = Object(handle="cube_1", pose=[0.1, 0, 0.95, 0,0,0,1])
+        cube_0 = Object(handle="cube", pose=[0.1, 0.1, 0.95, 0,0,0,1])
+        cube_1 = Object(handle="cube_1", pose=[0.1, -0.1, 0.95, 0,0,0,1])
         robot_interface.place_objects([cube_0, cube_1])
 
     detector = SingleHandDetector(hand_type=hand.value, selfie=False)
@@ -234,7 +258,8 @@ def retargeting(frame_queue: queue.Queue, stop_event, camera, hand: Hand,
                     continue
                 xyz = cloud[0]
 
-            wrist_pose = np.concatenate([xyz, [0.707, 0.707, 0, 0]])
+            # wrist_pose = np.concatenate([xyz, [0.707, 0.707, 0, 0]])
+            wrist_pose = np.concatenate([xyz, [0.707, -0.707, 0, 0]])
             gripper_pos = joint_pos_to_robot_pos(joint_pos, retargeter)
 
             # Obs = [eef_pos(3), eef_quat(4), gripper_qpos(12)] BEFORE command
@@ -265,8 +290,8 @@ def retargeting(frame_queue: queue.Queue, stop_event, camera, hand: Hand,
                     frames_without_hand = 0
 
                     # Reset objects
-                    robot_interface.move_object("cube", [0.1, 0.2, 0.95, 0,0,0,1])
-                    robot_interface.move_object("cube_1", [0.1, 0, 0.95, 0,0,0,1])
+                    robot_interface.move_object("cube", [0.1, 0.1, 0.95, 0,0,0,1])
+                    robot_interface.move_object("cube_1", [0.1, -0.1, 0.95, 0,0,0,1])
 
         # Display
         if depth is not None:
