@@ -123,11 +123,13 @@ cd diffusion_policy
 HYDRA_FULL_ERROR=1 python train.py --config-name=train_diffusion_unet_lowdim_workspace task=shrimpy_stack_lowdim
 ```
 
-Evaluation:
+Evaluation (Make sure to replace input with your actual ckpt file):
 ```bash
 cd /workspace
 
 python shrimpy_eval_isaacsim.py --input epoch=0500-train_loss=0.005.ckpt
+
+python shrimpy_eval_isaacsim.py --input epoch=1100-train_loss=0.002.ckpt
 ```
 
 ## Utils

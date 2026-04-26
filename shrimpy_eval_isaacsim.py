@@ -21,6 +21,7 @@ import dill
 import hydra
 
 from omegaconf import OmegaConf
+from OneEuroFilter import OneEuroFilter                                                                                                                                                          
 
                 
 from diffusion_policy.workspace.base_workspace import BaseWorkspace
@@ -115,12 +116,21 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
         time.sleep(0.1)
     ###################################################
 
+    
+    ################## Warm start Buffer ##################
+    robot_interface.set_cartesian_pose([np.array([0.1, 0.14, 1.1,  0.707,  -0.707,  0.0, 0.0])], [EE_FRAME])
+    robot_interface.set_joint_positions(np.array([ 0.5,  0.06,  1.19,   0.7,  -1.92,   0.38,
+        1.76,   0.003,  2.00,  -0.39,  1.70,   0.0]), GRIPPER_JOINT_NAMES)
 
     obs_history = deque(maxlen=n_obs_steps)
-    for _ in range(n_obs_steps):
+    for _ in range(n_obs_steps*2): # Let buffer "Warm up"
         obs_history.append(_get_obs(robot_interface))  
+        time.sleep(dt)
+    ###################################################
 
-
+    # OneEuro filter smoothign
+    pos_filters = [OneEuroFilter(freq=1/dt, mincutoff=0.6, beta=0.1) for _ in range(3)]
+    rpy_filters = [OneEuroFilter(freq=1/dt, mincutoff=0.6, beta=0.1) for _ in range(3)]    
 
     print('Ready!')
     while True:
@@ -135,7 +145,7 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
             while True:
 
                 # get obs
-                print('get_obs')
+                # print('get_obs')
                 obs_history.append(_get_obs(robot_interface))
 
                 # run inference
@@ -147,10 +157,10 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
                     result = policy.predict_action(obs_dict)
                     # This action starts from the first obs step
                     action = result['action'][0].detach().to('cpu').numpy()
-                    print('Inference latency:', time.time() - s)
+                    # print('Inference latency:', time.time() - s)
                 
 
-                for i in range(action.shape[0]):
+                for i in range(steps_per_inference):
                     
 
                     # Action shape: (18,)
@@ -158,16 +168,25 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
                     ee_rpy        = action[i][3:6]         # (3,) roll, pitch, yaw
                     gripper_qpos  = action[i][6:]          # (12,)
 
-                    ee_quat = Rotation.from_euler('xyz', ee_rpy).as_quat()  # (4,) xyzw
-                    ee_pose = np.concatenate([ee_pos, ee_quat])              # (7,)
+
                     
 
-                    print("ee_pos", ee_pos)
-                    print("ee_rpy:",  ee_rpy)
-                    print("gripper_qpos:",  gripper_qpos)
+                    # print("ee_pos", ee_pos)
+                    # print("ee_rpy:",  ee_rpy)
+                    # print("gripper_qpos:",  gripper_qpos)
 
-                    print("ee_quat", ee_quat)
-                    print("ee_pose", ee_pose)
+                    # print("ee_quat", ee_quat)
+                    # print("ee_pose", ee_pose)
+                    # One euro filter smoothing
+                    # initialize once before the loop        
+                    #                                                                                                                                                         
+                                                                                                     
+                    # Smoothing trajectory                                                                                                                                                                                                        
+                    ee_pos = np.array([f(v) for f, v in zip(pos_filters, ee_pos)])
+                    ee_rpy = np.array([f(v) for f, v in zip(rpy_filters, ee_rpy)]) 
+
+                    ee_quat = Rotation.from_euler('xyz', ee_rpy).as_quat()  # (4,) xyzw
+                    ee_pose = np.concatenate([ee_pos, ee_quat])              # (7,)
 
                     # Then sent to the Isaacsim:
                     robot_interface.set_cartesian_pose([ee_pose], [EE_FRAME])
@@ -176,7 +195,7 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
                     time.sleep(dt) # TODO: DON'T SLEEP, instead schedule with dt
 
                
-                print(f"Submitted {action.shape[0]} steps of actions.")
+                print(f"Submitted {steps_per_inference} steps of actions.")
 
 
         except KeyboardInterrupt:
