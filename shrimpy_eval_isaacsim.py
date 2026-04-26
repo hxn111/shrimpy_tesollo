@@ -140,6 +140,7 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
             # Start episode
             policy.reset()
 
+            episode_start = time.time()
             print("Started!")
 
             while True:
@@ -194,8 +195,15 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
 
                     time.sleep(dt) # TODO: DON'T SLEEP, instead schedule with dt
 
-               
+
                 print(f"Submitted {steps_per_inference} steps of actions.")
+                
+                RESET_TIME = 30.0
+                if time.time() - episode_start >= RESET_TIME:
+                    robot_interface.move_object("cube",   [0.1,  0.1, 0.95, 0, 0, 0, 1])
+                    robot_interface.move_object("cube_1", [0.1, -0.1, 0.95, 0, 0, 0, 1])
+                    episode_start = time.time()
+                    print("Blocks reset.")
 
 
         except KeyboardInterrupt:
