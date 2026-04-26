@@ -5,7 +5,7 @@ Usage:
 """
 
 
-from shrimpy_col_data import _get_obs, EE_FRAME, GRIPPER_JOINT_NAMES
+from shrimpy_col_data import _get_obs, _random_cube_poses, EE_FRAME, GRIPPER_JOINT_NAMES
 from robot_motion_interface.isaacsim.isaacsim_object_interface import IsaacsimObjectInterface, Object
 
 from scipy.spatial.transform import Rotation
@@ -101,9 +101,10 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
              raise TimeoutError("IsaacSim did not start within timeout")
          time.sleep(0.1)
     
-    # Initiate objects
-    cube_0 = Object(handle="cube", pose=[0.1, 0.1, 0.95, 0,0,0,1])
-    cube_1 = Object(handle="cube_1", pose=[0.1, -0.1, 0.95, 0,0,0,1])
+    # Initiate objects at randomized non-overlapping positions
+    pose0, pose1 = _random_cube_poses()
+    cube_0 = Object(handle="cube",   pose=pose0)
+    cube_1 = Object(handle="cube_1", pose=pose1)
     robot_interface.place_objects([cube_0, cube_1])
     
     # Wait for robot state and object poses to be populated
@@ -200,10 +201,11 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
                 
                 RESET_TIME = 30.0
                 if time.time() - episode_start >= RESET_TIME:
-                    robot_interface.move_object("cube",   [0.1,  0.1, 0.95, 0, 0, 0, 1])
-                    robot_interface.move_object("cube_1", [0.1, -0.1, 0.95, 0, 0, 0, 1])
+                    pose0, pose1 = _random_cube_poses()
+                    robot_interface.move_object("cube",   pose0)
+                    robot_interface.move_object("cube_1", pose1)
                     episode_start = time.time()
-                    print("Blocks reset.")
+                    print(f"Blocks reset: cube={pose0[:3]}, cube_1={pose1[:3]}")
 
 
         except KeyboardInterrupt:

@@ -37,7 +37,7 @@ class BimanualArmSceneCfg(InteractiveSceneCfg):
                 kinematic_enabled=True,
             ),
             collision_props=sim_utils.CollisionPropertiesCfg(collision_enabled=True),
-            visual_material=sim_utils.PreviewSurfaceCfg( diffuse_color=(0.05, 0.05, 0.05)),
+            visual_material=sim_utils.PreviewSurfaceCfg( diffuse_color=( 0.35, 0.35, 0.35)),
 
         ),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.914401))  # 01 added so its above urdf (for color rendering)
@@ -48,7 +48,7 @@ class BimanualArmSceneCfg(InteractiveSceneCfg):
         prim_path="/World/DomeLight",
         spawn=sim_utils.DomeLightCfg(
             color=(0.92, 0.95, 1.0),  # cool
-            intensity=200.0,
+            intensity=500.0,
         ),
     )
 
@@ -57,8 +57,8 @@ class BimanualArmSceneCfg(InteractiveSceneCfg):
         prim_path="/World/SunLight",
         spawn=sim_utils.DistantLightCfg(
             color=(1.0, 0.97, 0.9),  # warm
-            intensity=2000.0,
-            angle=1.0,
+            intensity=200.0,
+            angle=45.0,
         ),
     )
 

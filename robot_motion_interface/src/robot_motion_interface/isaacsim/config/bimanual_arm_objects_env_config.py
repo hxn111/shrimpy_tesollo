@@ -202,13 +202,14 @@ class BimanualArmObjectSceneCfg(BimanualArmSceneCfg):
     cube = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/cube",
         spawn=sim_utils.CuboidCfg(
-            size=(0.04, 0.06, 0.06),
-            mass_props = sim_utils.MassPropertiesCfg(mass=0.1),
+            # size=(0.04, 0.06, 0.06),
+            size=(0.06, 0.06, 0.06),
+            mass_props = sim_utils.MassPropertiesCfg(mass=0.08),
             rigid_props = sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True, kinematic_enabled=False),
             collision_props=sim_utils.CollisionPropertiesCfg(collision_enabled=True),
             physics_material=sim_utils.RigidBodyMaterialCfg(
-                static_friction=0.5,
-                dynamic_friction=0.4,
+                static_friction=0.8,
+                dynamic_friction=0.8,
                 friction_combine_mode="max",
             ),
             visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.0, 0.0, 1.0)),
@@ -220,13 +221,14 @@ class BimanualArmObjectSceneCfg(BimanualArmSceneCfg):
     cube_1 = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/cube_1",
         spawn=sim_utils.CuboidCfg(
-            size=(0.12, 0.12, 0.02),
-            mass_props = sim_utils.MassPropertiesCfg(mass=0.1),
+            # size=(0.12, 0.12, 0.02),
+            size=(0.06, 0.06, 0.06),
+            mass_props = sim_utils.MassPropertiesCfg(mass=0.08),
             rigid_props = sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True, kinematic_enabled=False),
             collision_props=sim_utils.CollisionPropertiesCfg(collision_enabled=True),
             physics_material=sim_utils.RigidBodyMaterialCfg(
-                static_friction=0.5,
-                dynamic_friction=0.4,
+                static_friction=0.8,
+                dynamic_friction=0.8,
                 friction_combine_mode="max",
             ),
             visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(1.0, 0.0, 0.0)),

@@ -321,7 +321,7 @@ class IsaacsimObjectInterface(IsaacsimInterface):
             markers={
                 "arrow": sim_utils_local.UsdFileCfg(
                     usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/UIElements/arrow_x.usd",
-                    scale=(0.05, 0.02, 0.2),
+                    scale=(0.05, 0.02, 0.3),
                     visual_material=sim_utils_local.PreviewSurfaceCfg(diffuse_color=(0.0, 1.0, 0.0)),
                 )
             },

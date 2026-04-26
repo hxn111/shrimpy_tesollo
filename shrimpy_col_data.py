@@ -74,6 +74,16 @@ def _save_episode(obs_buf: list, act_buf: list, save_dir: Path) -> int:
     return idx + 1
 
 
+def _random_cube_poses(min_dist=0.1):
+    """Sample non-overlapping random XY positions for both cubes."""
+    while True:
+        p0 = np.array([np.random.uniform(-0.05, 0.2), np.random.uniform(-0.2, 0.2), 0.95])
+        p1 = np.array([np.random.uniform(-0.05, 0.2), np.random.uniform(-0.2, 0.2), 0.95])
+        if np.linalg.norm(p0[:2] - p1[:2]) >= min_dist:
+            return list(p0) + [0, 0, 0, 1], list(p1) + [0, 0, 0, 1]
+        # TODO: RANDOM ORIENTATION LATER
+
+
 def _get_obs(robot_interface: Interface) -> np.ndarray:
     """Returns 33-dim obs: [object(14), eef_pos(3), eef_quat(4), gripper_qpos(12)]."""
 
@@ -95,8 +105,8 @@ def _get_obs(robot_interface: Interface) -> np.ndarray:
 # ──────────────────────────────────────────────────────────
 
 # Height-sensitive XY scale thresholds
-HEIGHT_FINE_Z   = 0.20   # at or below → fine-control mode (smallest XY scale)
-HEIGHT_COARSE_Z = 0.40   # at or above → coarse mode (original XY scale)
+HEIGHT_FINE_Z   = 0.9   # at or below → fine-control mode (smallest XY scale)
+HEIGHT_COARSE_Z = 1.15  # at or above → coarse mode (original XY scale)
 X_SCALE_FINE,   X_SCALE_COARSE = 0.75, 1.5
 Y_SCALE_FINE,   Y_SCALE_COARSE = 1.00, 2.0
 
@@ -105,18 +115,18 @@ def scale_and_set_poses(hand: Hand, unscaled_wrist_pose: np.ndarray,
                         wrist_filter):
     scaled_wrist_pose = unscaled_wrist_pose.copy()
     if hand == Hand.RIGHT:
-        # scaled_wrist_pose[0] = -scaled_wrist_pose[0] * 1.5 + 0.1                                                                                                                   
-        # scaled_wrist_pose[1] = -scaled_wrist_pose[1] * 2
+        scaled_wrist_pose[0] = -scaled_wrist_pose[0] * 1.5 + 0.1                                                                                                                   
+        scaled_wrist_pose[1] = -scaled_wrist_pose[1] * 2
          
         # Z fixed at 2× so the arm can reach any height; use it to drive XY gain.
         scaled_wrist_pose[2] *= 2
-        blend = float(np.clip(
-            (scaled_wrist_pose[2] - HEIGHT_FINE_Z) / (HEIGHT_COARSE_Z - HEIGHT_FINE_Z),
-            0.0, 1.0))
-        x_scale = X_SCALE_FINE + blend * (X_SCALE_COARSE - X_SCALE_FINE)
-        y_scale = Y_SCALE_FINE + blend * (Y_SCALE_COARSE - Y_SCALE_FINE)
-        scaled_wrist_pose[0] = -unscaled_wrist_pose[0] * x_scale + 0.1
-        scaled_wrist_pose[1] = -unscaled_wrist_pose[1] * y_scale
+        # blend = float(np.clip(
+        #     (scaled_wrist_pose[2] - HEIGHT_FINE_Z) / (HEIGHT_COARSE_Z - HEIGHT_FINE_Z),
+        #     0.0, 1.0))
+        # x_scale = X_SCALE_FINE + blend * (X_SCALE_COARSE - X_SCALE_FINE)
+        # y_scale = Y_SCALE_FINE + blend * (Y_SCALE_COARSE - Y_SCALE_FINE)
+        # scaled_wrist_pose[0] = -unscaled_wrist_pose[0] * x_scale + 0.1
+        # scaled_wrist_pose[1] = -unscaled_wrist_pose[1] * y_scale
 
          
         filtered_wrist_xyz = np.array([f(v) for f, v in zip(wrist_filter, scaled_wrist_pose[:3])])
@@ -204,8 +214,9 @@ def retargeting(frame_queue: queue.Queue, stop_event, camera, hand: Hand,
             if time.time() > deadline:
                 raise TimeoutError("IsaacSim did not start within timeout")
             time.sleep(0.1)
-        cube_0 = Object(handle="cube", pose=[0.1, 0.1, 0.95, 0,0,0,1])
-        cube_1 = Object(handle="cube_1", pose=[0.1, -0.1, 0.95, 0,0,0,1])
+        pose0, pose1 = _random_cube_poses()
+        cube_0 = Object(handle="cube",   pose=pose0)
+        cube_1 = Object(handle="cube_1", pose=pose1)
         robot_interface.place_objects([cube_0, cube_1])
 
     detector = SingleHandDetector(hand_type=hand.value, selfie=False)
@@ -290,8 +301,9 @@ def retargeting(frame_queue: queue.Queue, stop_event, camera, hand: Hand,
                     frames_without_hand = 0
 
                     # Reset objects
-                    robot_interface.move_object("cube", [0.1, 0.1, 0.95, 0,0,0,1])
-                    robot_interface.move_object("cube_1", [0.1, -0.1, 0.95, 0,0,0,1])
+                    pose0, pose1 = _random_cube_poses()
+                    robot_interface.move_object("cube",   pose0)
+                    robot_interface.move_object("cube_1", pose1)
 
         # Display
         if depth is not None:
