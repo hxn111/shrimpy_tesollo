@@ -10,9 +10,7 @@ retargeting:
   # Human hand keypoint indices: row0=origin(wrist=0), row1=task(fingertips)
   target_link_human_indices: [ [ 0, 0, 0 ], [ 4, 8, 12 ] ]
 
-  # Tesollo DG3F hand is slightly smaller than a human hand; 1.0~1.2 is usually a good fit.
-  # 1.5 (original) was too large and pushed fingers to unreachable targets.
-  scaling_factor: 1.2
+  scaling_factor: 1.8
 
   # Smoothing filter: 0.2 is a good balance of responsiveness vs stability
   low_pass_alpha: 0.2

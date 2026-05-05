@@ -4,14 +4,12 @@ retargeting:
 
   # Target refers to the retargeting target, which is the robot hand
   wrist_link_name: "wrist"
-  # finger_tip_link_names: [ "F1_TIP", "F2_TIP", "F3_TIP" ]
   finger_tip_link_names: [ "F1_CONTACT", "F2_CONTACT", "F3_CONTACT" ]
 
 
   scaling_factor: 1.8
 
   # A smaller alpha means stronger filtering, i.e. more smooth but also larger latency
-  # low_pass_alpha: 0.2
   low_pass_alpha: 0.3
 
 
