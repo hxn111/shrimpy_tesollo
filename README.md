@@ -41,18 +41,6 @@ To test that isaacsim is working correctly, you can run `. /isaac-sim/isaac-sim.
 
 NOTE: If you need to start another terminal, once the container is started, run `sudo docker compose -f compose.isaac.yaml exec isaac-base bash`
 
-    
-<!-- b. On MACHINE B (Docker with workspace dependencies):
-
-```bash
-xhost +local: # Note: This isn't very secure but is th easiest way to do this
-sudo docker compose -f compose.ros.yaml build
-sudo docker compose -f compose.ros.yaml run --rm ros-base  # Opens TERMINAL 2
-```
-
-NOTE: if you need to start another terminal, once the container is started, run `sudo docker compose -f compose.ros.yaml exec ros-base bash`.  -->
-
-
 
 ## Running
 
@@ -132,27 +120,12 @@ python shrimpy_eval_isaacsim.py --input epoch=0500-train_loss=0.005.ckpt
 python shrimpy_eval_isaacsim.py --input epoch=1100-train_loss=0.002.ckpt
 ```
 
-## Utils
-* Visualizing URDF:
-    ```bash
-    cd assets/robots/hands/tesollo_hand
-    yourdfpy ./tesollo_hand_left.urdf
-    ```
-
-    You can use these keys in the urdf viewer:
-    * a: Toggle rendered XYZ/RGB axis markers (off, world frame, every frame)
-    * w: Toggle wireframe mode (good for looking inside meshes, off by default)
 
 
-* Seeing webcam usb number: `v4l2-ctl --list-devices`
+## Data
+The data we recorded and trained the diffusion policy on is located in the [/data](data) folder:
+* `task0/`: Teleoperation demonstrations of moving the right robot arm in a square motion.
+* `task1/`:  Teleoperation demonstrations of picking up a small blue cube and placing it on a larger flat red cube (fixed initial cube poses).
+* `task2/`: Teleoperation demonstrations of picking up a uniform blue cube and placing it on the same-sized red cube (random inital cube poses). In this folder demonstrations that are numbered 00XX or 01XX are demonstrations where the cubes where spawned randomly on the full table workspace ~40x40cm. Alternatively, demonstrations that are numbered 02XX have cubes spawned randomly on a smaller table workspace (~20x20cm).
 
-## Resources
-* DexRetargeting Tutorial: https://github.com/dexsuite/dex-retargeting/blob/main/example/vector_retargeting/README.md
-
-## Diffusion Policy
-```
-conda activate robodiff
-
-# test lift_mh checkpoints on mujoco
-MUJOCO_GL=egl python eval.py --checkpoint data/lift_mh.ckpt --output_dir data/lift_mh_eval_output --device cuda:0
-```
+Note, this repo is currently setup to record and train `task2` data (`task0` should work too). You can look at the repo history to find configurations for the previous tasks.
