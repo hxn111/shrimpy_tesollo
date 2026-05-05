@@ -133,6 +133,14 @@ $(document).ready(function() {
 
 	// Initialize all div with carousel class
     var carousels = bulmaCarousel.attach('.carousel', options);
+
+    // Disable autoplay for the video carousel
+    carousels.forEach(function(carousel) {
+        if (carousel.element && carousel.element.id === 'data-collection-carousel') {
+            carousel.options.autoplay = false;
+            carousel.stop();
+        }
+    });
 	
     bulmaSlider.attach();
     

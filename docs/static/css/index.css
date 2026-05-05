@@ -262,7 +262,7 @@ body {
   margin: 1rem;
   overflow: hidden;
   padding: 1.5rem;
-  font-size: 0;
+  font-size: 1rem;
   background: var(--background-primary);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-md);

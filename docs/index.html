@@ -338,7 +338,7 @@
         <div class="content has-text-justified">
           <!-- TODO: Replace with your paper abstract -->
           <p>
-            We present a teleoperation-based data collection and imitation learning pipeline for the Tesollo DG-3F three-finger gripper mounted on a Franka Emika Panda robotic arm. Using this pipeline, we collect a dataset of cube-stacking demonstrations in which the robot must grasp a cube, lift it, and precisely place it atop a second cube. We then train a Diffusion Policy model on the collected demonstrations. Our experiments show that the learned policy successfully generalizes cube-stacking behavior from a modest number of human demonstrations, validating both the expressiveness of Diffusion Policy for dexterous manipulation and the practicality of our teleoperation pipeline for real-robot data collection with multi-fingered end effectors.
+            We present a teleoperation-based data collection and imitation learning pipeline for the Tesollo DG-3F three-finger gripper mounted on a Franka Panda robotic arm. Using this pipeline, we collect a dataset of cube-stacking demonstrations in which the robot must grasp a cube, lift it, and precisely place it atop a second cube. We then train a Diffusion Policy model on the collected demonstrations. Our experiments show that the learned policy successfully generalizes cube-stacking behavior from a modest number of human demonstrations, validating both the expressiveness of Diffusion Policy for dexterous manipulation and the practicality of our teleoperation pipeline for real-robot data collection with multi-fingered end effectors.
           </p>
         </div>
       </div>
@@ -348,45 +348,36 @@
 <!-- End paper abstract -->
 
 
-<!-- Image carousel -->
+<!-- Data collection section -->
 <section class="hero is-small">
   <div class="hero-body">
-    <div class="container">
-      <div id="results-carousel" class="carousel results-carousel">
-       <div class="item">
-        <!-- TODO: Replace with your research result images -->
-        <img src="static/images/data_pipeline.png" alt="First research result visualization" loading="lazy"/>
-        <!-- TODO: Replace with description of this result -->
-        <h2 class="subtitle has-text-centered">
-          First image description.
-        </h2>
+    <div class="container has-text-centered">
+      <h2 class="title is-3">Teleoperation Data Collection</h2>
+      <img src="static/images/data_pipeline.png" alt="Data collection pipeline" loading="lazy" style="max-width: 80%;"/>
+      <div id="data-collection-carousel" class="carousel results-carousel" style="margin-top: 1rem; width: 80%; margin-left: auto; margin-right: auto;">
+        <div class="item has-text-centered">
+          <video controls style="width: 100%; height: 600px; object-fit: contain; display: block;">
+            <source src="static/videos/hand demo.mp4" type="video/mp4">
+          </video>
+          <div style="margin-top: 0.75rem; text-align: center;">
+            <h2 class="subtitle" style="margin-bottom: 0.25rem;">Adapted Hand Retargeting</h2>
+            <p style="margin: 0;">Finger mapping: thumb, index, middle finger --> 3-finger gripper.</p>
+            <p style="margin: 0;">Wrist mapping: human wrist height and depth --> robot arm end effector position.</p>
+          </div>
+        </div>
+        <div class="item has-text-centered">
+          <video controls style="width: 100%; height: 600px; object-fit: contain; display: block;">
+            <source src="static/videos/teleoperation.mp4" type="video/mp4">
+          </video>
+          <div style="margin-top: 0.75rem; text-align: center;">
+            <h2 class="subtitle" style="margin-bottom: 0.25rem;">Teleoperation Demonstration</h2>
+          </div>
+        </div>
       </div>
-      <div class="item">
-        <!-- Your image here -->
-        <img src="static/images/carousel2.jpg" alt="Second research result visualization" loading="lazy"/>
-        <h2 class="subtitle has-text-centered">
-          Second image description.
-        </h2>
-      </div>
-      <div class="item">
-        <!-- Your image here -->
-        <img src="static/images/carousel3.jpg" alt="Third research result visualization" loading="lazy"/>
-        <h2 class="subtitle has-text-centered">
-         Third image description.
-       </h2>
-     </div>
-     <div class="item">
-      <!-- Your image here -->
-      <img src="static/images/carousel4.jpg" alt="Fourth research result visualization" loading="lazy"/>
-      <h2 class="subtitle has-text-centered">
-        Fourth image description.
-      </h2>
     </div>
   </div>
-</div>
-</div>
 </section>
-<!-- End image carousel -->
+<!-- End data collection section -->
 
 
 
