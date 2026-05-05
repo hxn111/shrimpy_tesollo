@@ -330,6 +330,11 @@ body {
   border-radius: 2px;
 }
 
+.title.is-3.title-left::after {
+  left: 0;
+  transform: none;
+}
+
 /* Content Improvements */
 .content.has-text-justified {
   font-size: 1.1rem;
