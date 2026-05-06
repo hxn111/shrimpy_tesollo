@@ -280,24 +280,27 @@
 <!-- End paper abstract -->
 
 <!-- INTRODUCTION -->
-<section class="hero is-small">
-  <div class="hero-body">
-    <div class="container has-text-justified">
-      <h2 class="title is-3 has-text-centered">Introduction</h2>
-      <p>
-      Diffusion policies have recently shown strong performance in visuomotor control, particularly in dexterous manipulation tasks. These methods enable robots to learn complex, multimodal behaviors directly from data, without requiring explicit modeling of system dynamics.
+<section class="section hero is-small">
+  <div class="container is-max-desktop"> 
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">  
+        <h2 class="title is-3 has-text-centered">Introduction</h2>
+        <div class="content has-text-justified">
+          <p>
+          Diffusion policies have recently shown strong performance in visuomotor control, particularly in dexterous manipulation tasks. These methods enable robots to learn complex, multimodal behaviors directly from data, without requiring explicit modeling of system dynamics.
 
-      A common approach to collecting such data is through human teleoperation, which provides an intuitive and scalable way to generate demonstrations for robot learning. By allowing operators to directly control the robot, teleoperation captures rich task-relevant behaviors that can be used to train policies.
+          A common approach to collecting such data is through human teleoperation, which provides an intuitive and scalable way to generate demonstrations for robot learning. By allowing operators to directly control the robot, teleoperation captures rich task-relevant behaviors that can be used to train policies.
 
-      Our research questions are presented below:
-      </p>
-      <p><strong>RQ1.</strong> How can we adapt a diffusion policy architecture to support the control of a bimanual robot system with 3-finger dexterous robot grippers?</p>
-      <p><strong>RQ2.</strong> How can we design a teleoperation system to collect high-quality dexterous demonstration data?</p>
-      
-      <!-- <p>For hand tracking and retargeting, we address the morphological mismatch between the 5-finger human hand and the 3-finger Tesollo DG-3F gripper by implementing a point-set distance optimization approach based on the DexRetargeting project. We use an RGBD d435 Realsense camera to localize the wrist pose and orientation, given the wrist keypoints from the hand tracking.</p>
+          Our research questions are presented below:
+          </p>
 
-      <p>We adapt the Diffusion Policy architecture from its original MuJoCo-based implementation to the Isaac Sim simulation platform.</p>   -->
-    </div>
+          <p><strong>RQ1.</strong> How can we adapt a diffusion policy architecture to support the control of a bimanual robot system with 3-finger dexterous robot grippers?</p>
+          <p><strong>RQ2.</strong> How can we design a teleoperation system to collect high-quality dexterous demonstration data?</p>
+          
+          <!-- <p>For hand tracking and retargeting, we address the morphological mismatch between the 5-finger human hand and the 3-finger Tesollo DG-3F gripper by implementing a point-set distance optimization approach based on the DexRetargeting project. We use an RGBD d435 Realsense camera to localize the wrist pose and orientation, given the wrist keypoints from the hand tracking.</p>
+
+          <p>We adapt the Diffusion Policy architecture from its original MuJoCo-based implementation to the Isaac Sim simulation platform.</p>   -->
+      </div>
     </div>
   </div>
 </section>
@@ -305,37 +308,32 @@
 
 
 <!-- METHODS -->
-<section class="hero is-small">
-  <div class="hero-body">
-    <div class="container has-text-justified">
+<section class="section hero is-small">
+  <div class="container is-max-desktop"> 
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths"> 
+        <h2 class="title is-3">Diffusion Policy Pipeline</h2>
 
-      <h2 class="title is-3 has-text-centered">Diffusion Policy Pipeline</h2>
+        <img src="static/images/data_pipeline.png" alt="Data collection pipeline" loading="lazy" />
 
-      
-      <img src="static/images/data_pipeline.png" alt="Data collection pipeline" loading="lazy" />
-      
-      <p>
-        Our Diffusion Policy pipeline includes three stages. The first being wrist and finger tracking which is 
-        retargeted into robot arm end-effector pose and gripper joint positions. This is used to teleoperate the robot
-        in simulation and collect data of stacking blocks. This data is then used to train a low-dimension diffusion policy.
+        <div class="content has-text-justified">
+          <p>
+            Our Diffusion Policy pipeline includes three stages. The first being wrist and finger tracking which is 
+            retargeted into robot arm end-effector pose and gripper joint positions. This is used to teleoperate the robot
+            in simulation and collect data of stacking blocks. This data is then used to train a low-dimension diffusion policy.
+          </p>
 
-      </p>
+        <h3 class="title is-4">Stage 1: Finger & Wrist Tracking</h3>
+          <p>
+            To track the wrist and finger position, we use the MediaPipe Hand Tracking Dex Retargeting from the AnyTeleop Project [1].
+            We use a RGB-depth camera (Realsense d435) to localize the wrist relative to the camera frame using the depth data. The wrist pose
+            is scaled up linearly into the robot end-effector pose so that the robot can reach the entire workspace. We also add a One Euro Filter [3]
+            (a special type of low pass filter with reduced lag) to smooth the wrist data  since the tracking model is a bit jittery.
+            TODO: finger retargeting
+          </p>
+      </div>
 
-      <br/><br/><br/>
-      <h2 class="title is-4">Stage 1: Finger & Wrist Tracking</h2>
-
-      <p>
-        To track the wrist and finger position, we use the MediaPipe Hand Tracking Dex Retargeting from the AnyTeleop Project [1].
-        We use a RGB-depth camera (Realsense d435) to localize the wrist relative to the camera frame using the depth data. The wrist pose
-        is scaled up linearly into the robot end-effector pose so that the robot can reach the entire workspace. We also add a One Euro Filter [3]
-        (a special type of low pass filter with reduced lag) to smooth the wrist data  since the tracking model is a bit jittery.
-
-
-        TODO: finger retargeting
-
-      </p>
-
-      <div id="data-collection-carousel" class="carousel results-carousel" style="margin-top: 1rem; width: 80%; margin-left: auto; margin-right: auto;">
+      <div id="data-collection-carousel" class="carousel results-carousel" style="margin-top: 1rem; width: 140%; margin-left: -20%; margin-right: -20%;">
         <div class="item has-text-centered">
           <video controls style="width: 100%; height: 600px; object-fit: contain; display: block;">
             <source src="static/videos/hand_demo.mp4" type="video/mp4">
@@ -357,16 +355,15 @@
         </div>
       </div>
 
-      <br/><br/><br/>
-      <h2 class="title is-4">Stage 2: Teleoperation & Data Collection</h2>
-      TODO
+      <div class="content has-text-justified" style="margin-top: 2rem;"> 
+        <h3 class="title is-4">Stage 2: Teleoperation & Data Collection</h3>
+        <p>TODO</p>
 
-      <br/><br/><br/>
-      <h2 class="title is-4">Stage 3: Diffusion Policy Training</h2>
-      TODO
 
-      <br/><br/><br/>
+        <h3 class="title is-4">Stage 3: Diffusion Policy Training</h3>
+        <p>TODO</p>
 
+      </div>
     </div>
   </div>
 </section>
