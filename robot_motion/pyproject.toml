@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core", "pybind11"]
+requires = ["scikit-build-core==0.12.2", "pybind11"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -16,3 +16,5 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+[tool.scikit-build]
+wheel.packages = ["src/robot_motion"]
