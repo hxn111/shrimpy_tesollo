@@ -314,7 +314,7 @@
 
         <img src="static/images/data_pipeline.png" alt="Data collection pipeline" loading="lazy" />
 
-        <div class="content has-text-justified">
+      <div class="content has-text-justified">
           <p>
             Our Diffusion Policy pipeline includes three stages. The first being wrist and finger tracking which is 
             retargeted into robot arm end-effector pose and gripper joint positions. This is used to teleoperate the robot
@@ -416,35 +416,67 @@
 
 
 <!-- EXPERIMENTS section -->
-<section class="hero is-small is-light">
-  <div class="hero-body">
-    <div class="container has-text-centered">
-      <h2 class="title is-3">Experiments</h2>
+<section class="section hero is-small is-light">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-four-fifths has-text-centered">
+        <h2 class="title is-3">Experiments</h2>
 
-      <h3 class="title is-4" style="margin-top: 1.5rem;">Experiment 1: Block Stacking, Fixed Location</h3>
-      <div style="width: 80%; margin: 1rem auto 0;">
-        <div class="item has-text-centered">
-          <video controls style="width: 100%; height: 400px; object-fit: contain; display: block;">
-            <source src="static/videos/study1_result_60_demonstrations_1100_epochs_0.002_loss.mp4" type="video/mp4">
-          </video>
-          <div style="margin-top: 0.75rem; text-align: center;">
-            <h2 class="subtitle" style="margin-bottom: 0.25rem;">Success (60 demonstrations)</h2>
+        <div class="content has-text-justified">
+          <p>
+          We ran two different experiments. The first one was for initial testing of the model and the second one was a more
+          difficult task for testing the model robustness.
+          In the first experiment, the task was stacking a small blue block on top of a larger red one. Here the cubes were
+          spawned in the same place every time.
+          We were able to achieve success with 60 demonstrations, trained for 1100 epochs, with a training loss of 0.002.
+          </p>
+          
+          <p>
+          In the second experiment, the task was to stack a uniform blue cube onto the same-sized red cube. The cube positions were randomly
+          initialized on the workspace (~40x40cm). However, with 103 demonstrations (trained for 1250 epochs with a 0.0002 loss), the model was 
+          still not able to stack the cube successfully,
+          which we infer is due to the model moving out of distribution due to the large workspace. Because of this, we opted to constrain 
+          the workspace to ~10x10cm and achieved success after 66 demonstrations, trained for 1400 epochs with a training loss of 0.001. We then
+          combined both the large and constrained workspace data for a total of 169 demonstrations, trained for 900 epochs at a 0.002 loss. We
+          used this checkpoint for our final evaluation below. We found that training further than a 0.002/0.001 loss caused too much overfitting
+          which led to failure during evaluation. Our final training checkpoints are available 
+          <a href="https://drive.google.com/drive/folders/1V7XG2Uscj1gLyu_sARw0agTFePV4tFPQ?usp=drive_link" target="_blank" rel="noopener noreferrer">here</a>.
+          </p>
+
+          <p>
+          For our final evaluation in the second experiment, we ran 30 rollouts with inference at 10 HZ and used a 12-step action chunking.
+          We measured success as being able to stack the blue cube on the red cube without knocking it off within 1-minute.
+          The diffusion model achieved a <b>63% success rate</b>. Note, that while the success rate appears fairly low, it is 
+          better than our own teleoperation success rate of about 53%. What makes this task difficult is aligning the blue cube so 
+          it does not fall off when placed on the red cube, as well as releasing the blue cube in a way that does not knock it over 
+          (since it is a similar width as the gripper).
+          </p>
+        </div>
+
+        <h3 class="title is-4" style="margin-top: 1.5rem;">Experiment 1: Block Stacking, Fixed Location</h3>
+        <div style="width: 80%; margin: 1rem auto 0;">
+          <div class="item has-text-centered">
+            <video controls style="width: 100%; height: 400px; object-fit: contain; display: block;">
+              <source src="static/videos/study1_result_60_demonstrations_1100_epochs_0.002_loss.mp4" type="video/mp4">
+            </video>
+            <div style="margin-top: 0.75rem; text-align: center;">
+              <h2 class="subtitle" style="margin-bottom: 0.25rem;">Success (60 demonstrations)</h2>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="title is-4" style="margin-top: 2.5rem;">Experiment 2: Block Stacking, Uniform Shape, Random Locations</h3>
+        <div style="width: 80%; margin: 1rem auto 0;">
+          <div class="item has-text-centered">
+            <video controls style="width: 100%; height: 400px; object-fit: contain; display: block;">
+              <source src="static/videos/huge_success.mp4" type="video/mp4">
+            </video>
+            <div style="margin-top: 0.75rem; text-align: center;">
+              <h2 class="subtitle" style="margin-bottom: 0.25rem;">Success (66 demonstrations with constrained block randomization)</h2>
+            </div>
           </div>
         </div>
       </div>
-
-      <h3 class="title is-4" style="margin-top: 2.5rem;">Experiment 2: Block Stacking, Uniform Shape, Random Locations</h3>
-      <div style="width: 80%; margin: 1rem auto 0;">
-        <div class="item has-text-centered">
-          <video controls style="width: 100%; height: 400px; object-fit: contain; display: block;">
-            <source src="static/videos/huge_success.mp4" type="video/mp4">
-          </video>
-          <div style="margin-top: 0.75rem; text-align: center;">
-            <h2 class="subtitle" style="margin-bottom: 0.25rem;">Success (66 demonstrations with constrained block randomization)</h2>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 </section>

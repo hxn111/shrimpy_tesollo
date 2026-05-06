@@ -80,7 +80,7 @@ python shrimpy_eval_isaacsim.py --input <YOUR_CHECKPOINT.ckpt>
 The data we recorded and trained the diffusion policy on is located in the [/data](data) folder:
 * `task0/`: Teleoperation demonstrations of moving the right robot arm in a square motion.
 * `task1/`:  Teleoperation demonstrations of picking up a small blue cube and placing it on a larger flat red cube (fixed initial cube poses).
-* `task2/`: Teleoperation demonstrations of picking up a uniform blue cube and placing it on the same-sized red cube (random inital cube poses). In this folder demonstrations that are numbered 00XX or 01XX are demonstrations where the cubes where spawned randomly on the full table workspace ~40x40cm. Alternatively, demonstrations that are numbered 02XX have cubes spawned randomly on a smaller table workspace (~20x20cm).
+* `task2/`: Teleoperation demonstrations of picking up a uniform blue cube and placing it on the same-sized red cube (random inital cube poses). In this folder demonstrations that are numbered 00XX or 01XX are demonstrations where the cubes where spawned randomly on the full table workspace ~40x40cm. Alternatively, demonstrations that are numbered 02XX have cubes spawned randomly on a smaller table workspace (~10x10cm).
 
 Note, this repo is currently setup to record and train `task2` data (`task0` should work too). You can look at the repo history to find configurations for the previous tasks.
 

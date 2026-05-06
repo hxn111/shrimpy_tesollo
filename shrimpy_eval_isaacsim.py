@@ -33,7 +33,7 @@ OmegaConf.register_new_resolver("eval", eval, replace=True)
 @click.command()
 @click.option('--input', '-i', required=True, help='Path to checkpoint')
 @click.option('--steps_per_inference', '-si', default=12, type=int, help="Action horizon for inference.")
-@click.option('--frequency', '-f', default=30, type=float, help="Control frequency in Hz.")  # Originally 10
+@click.option('--frequency', '-f', default=10, type=float, help="Control frequency in Hz.")  # Originally 10
 
 def main(input, 
     steps_per_inference,
