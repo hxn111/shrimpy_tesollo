@@ -29,7 +29,7 @@ xhost +local: # Note: This isn't very secure but is th easiest way to do this
 sudo docker compose -f compose.isaac.yaml build
 sudo docker compose -f compose.isaac.yaml run --rm isaac-base-5.1 
 
-# TODO: ADD THIS TO DOCKER:
+# Next install these...
 pip install OneEuroFilter pygame 
 pip install sensor_interface_py
 pip uninstall numpy -y
