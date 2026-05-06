@@ -27,13 +27,13 @@ Run this on the specified computer to build and launch the docker container. The
 ```bash
 xhost +local: # Note: This isn't very secure but is th easiest way to do this
 sudo docker compose -f compose.isaac.yaml build
-sudo docker compose -f compose.isaac.yaml run --rm isaac-base 
+sudo docker compose -f compose.isaac.yaml run --rm isaac-base-5.1 
 
 # TODO: ADD THIS TO DOCKER:
 pip install OneEuroFilter pygame 
 pip install -e sensor_interface_py
-pip uninstall numpy
-conda install dill diffusers zarr "numpy==1.26" "numcodecs<0.16" pandas 
+pip uninstall numpy -y
+conda install dill diffusers zarr "numpy==1.26" "numcodecs<0.16" pandas -y
 pip install av
 pip install -e diffusion_policy
 ```

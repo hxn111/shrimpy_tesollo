@@ -95,11 +95,11 @@ x-isaac-deploy: &isaac-deploy
           capabilities: [ gpu ]
 
 services:
-  isaac-base:
+  isaac-base-5.1:
     build:
       dockerfile: Dockerfile.isaac
-    image: isaac-base
-    container_name: isaac-base
+    image: isaac-base-5.1
+    container_name: isaac-base-5.1
     environment: *isaac-environment
     volumes: *isaac-volumes 
     privileged: true
