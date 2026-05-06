@@ -263,7 +263,14 @@
         <div class="content has-text-justified">
           <!-- TODO: Replace with your paper abstract -->
           <p>
-            We present a teleoperation-based data collection and imitation learning pipeline for the Tesollo DG-3F three-finger gripper mounted on a Franka Panda robotic arm. Using this pipeline, we collect a dataset of cube-stacking demonstrations in which the robot must grasp a cube, lift it, and precisely place it atop a second cube. We then train a Diffusion Policy model on the collected demonstrations. Our experiments show that the learned policy successfully generalizes cube-stacking behavior from a modest number of human demonstrations, validating both the expressiveness of Diffusion Policy for dexterous manipulation and the practicality of our teleoperation pipeline for real-robot data collection with multi-fingered end effectors.
+            We present a teleoperation-based data collection and imitation learning pipeline for the 
+            Tesollo DG-3F three-finger gripper mounted on a Franka Panda robotic arm. Using this pipeline, 
+            we collect a dataset of cube-stacking demonstrations in which the robot must grasp a cube, lift it, 
+            and precisely place it atop a second cube. We then train a Diffusion Policy model on the collected 
+            demonstrations. Our experiments show that the learned policy successfully generalizes cube-stacking 
+            behavior from a modest number of human demonstrations, validating both the expressiveness of 
+            Diffusion Policy for dexterous manipulation and the practicality of our teleoperation pipeline for 
+            real-robot data collection with multi-fingered end effectors.
           </p>
         </div>
       </div>
@@ -276,9 +283,23 @@
 <!-- Data collection section -->
 <section class="hero is-small">
   <div class="hero-body">
-    <div class="container has-text-centered">
-      <h2 class="title is-3">Teleoperation Data Collection</h2>
-      <img src="static/images/data_pipeline.png" alt="Data collection pipeline" loading="lazy" style="max-width:75%;"/>
+    <div class="container has-text-justified">
+
+      <h2 class="title is-3 has-text-centered">Diffusion Policy Pipeline</h2>
+
+      
+      <img src="static/images/data_pipeline.png" alt="Data collection pipeline" loading="lazy" />
+      
+      <p>
+        Our Diffusion Policy pipeline includes three stages. The first being wrist and finger tracking which is 
+        retargeted into robot arm end-effector pose and gripper joint positions. This is used to teleoperate the robot
+        in simulation and collect data of stacking blocks. This data is then used to train a low-dimension diffusion policy.
+
+      </p>
+
+      <br/><br/><br/>
+      <h2 class="title is-4">Stage 1: Finger & Wrist Tracking</h2>
+
       <div id="data-collection-carousel" class="carousel results-carousel" style="margin-top: 1rem; width: 80%; margin-left: auto; margin-right: auto;">
         <div class="item has-text-centered">
           <video controls style="width: 100%; height: 600px; object-fit: contain; display: block;">
@@ -300,6 +321,17 @@
           </div>
         </div>
       </div>
+
+      <br/><br/><br/>
+      <h2 class="title is-4">Stage 2: Teleoperation & Data Collection</h2>
+      TODO
+
+      <br/><br/><br/>
+      <h2 class="title is-4">Stage 3: Diffusion Policy Training</h2>
+      TODO
+
+      <br/><br/><br/>
+
     </div>
   </div>
 </section>
