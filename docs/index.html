@@ -323,11 +323,16 @@
         We use a RGB-depth camera (Realsense d435) to localize the wrist relative to the camera frame using the depth data. The wrist pose
         is scaled up linearly into the robot end-effector pose so that the robot can reach the entire workspace. We also add a One Euro Filter [3]
         (a special type of low pass filter with reduced lag) to smooth the wrist data  since the tracking model is a bit jittery.
-
-
-        TODO: finger retargeting
-
       </p>
+      <br/>
+      <p>
+        To retarget the finger tracking to gripper joint positions, we use Dex Retargeting optimizer. Since the Tesollo grippers have a differently
+        morphology compared to the human hand, in order to get the Dex Retargeting optimizer to work, we had to make two changes to the URDF.
+        These changes were discovered tediously through trial and error. (1) We had to to add a virtual wrist link that was closer to the margin-bottom
+        "palm" of the gripper. (2) We had to add virtual finger tip links with adjusted orientation. The optimizer used these wrist and finger
+        links, along with a 1.8 scaling factor parameter to perform retargeting. 
+      </p>
+      
 
       <div id="data-collection-carousel" class="carousel results-carousel" style="margin-top: 1rem; width: 80%; margin-left: auto; margin-right: auto;">
         <div class="item has-text-centered">

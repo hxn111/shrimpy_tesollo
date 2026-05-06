@@ -33,7 +33,6 @@ sudo docker compose -f compose.isaac.yaml run --rm isaac-base
 pip install OneEuroFilter pygame 
 pip install -e sensor_interface_py
 pip uninstall numpy
-conda install numpy==1.26
 conda install dill diffusers zarr "numpy==1.26" "numcodecs<0.16" pandas 
 pip install av
 pip install -e diffusion_policy
