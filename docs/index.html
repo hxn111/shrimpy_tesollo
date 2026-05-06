@@ -247,7 +247,7 @@
       </video>
       <!-- TODO: Replace with your video description -->
       <h2 class="subtitle has-text-centered">
-        Demos of successfully stacking cubes. 
+        Demos of successfully stacking blocks. 
       </h2>
     </div>
   </div>
@@ -265,9 +265,9 @@
           <p>
             We present a teleoperation-based data collection and imitation learning pipeline for the 
             Tesollo DG-3F three-finger gripper mounted on a Franka Panda robotic arm. Using this pipeline, 
-            we collect a dataset of cube-stacking demonstrations in which the robot must grasp a cube, lift it, 
-            and precisely place it atop a second cube. We then train a Diffusion Policy model on the collected 
-            demonstrations. Our experiments show that the learned policy successfully generalizes cube-stacking 
+            we collect a dataset of block-stacking demonstrations in which the robot must grasp a block, lift it, 
+            and precisely place it atop a second block. We then train a Diffusion Policy model on the collected 
+            demonstrations. Our experiments show that the learned policy successfully generalizes block-stacking 
             behavior from a modest number of human demonstrations, validating both the expressiveness of 
             Diffusion Policy for dexterous manipulation and the practicality of our teleoperation pipeline for 
             real-robot data collection with multi-fingered end effectors.
@@ -356,7 +356,7 @@
         We used the end-effector pose and gripper joint positions to teleoperate the robot in Isaacsim
         in realtime. We found that placing the camera on the ground with the lense facing upwards tracked the
         hand the best. The hand tracking model was sensitive to lighting and struggled when the hand was closed
-        due to shadows. To counteract this, we found the best lighting was during a cloudy day
+        due to shadows. To counteract this, we found the best lighting conditions occurred during a cloudy day
         with the overhead lights off and a phone flashlight facing up towards the hand.
         </p>
 
@@ -364,27 +364,27 @@
         We found teleoperation very challenging due to a lack of depth perception in simulation and a lack of 
         tactile/force feedback. To address these challenges, we experimented with the following three teleoperation aids:
         <br/>
-        <b>(1) Visual Guidance:</b> We added a virtual green arrow facing down robot gripper to help with operator
+        <b>(1) Visual Guidance:</b> We added a virtual green arrow facing down from the robot gripper to help with operator
         alignment to compensate for the depth-perception challenges. We also experimented with the lighting to adjust 
         shadows. We found stronger shadows did not improve depth perception enough and instead obscured the workspace.
-        Instead removing shadows was the most helpful for teleoperation.
+        Removing shadows was the most helpful for teleoperation.
         <br/>
         <b>(2) Adaptive Motion Scaling:</b> To speed up teleoperation while allowing fine-grained movements close to
-        the cubes, we experimented with 1:1 movement scaling for motions high above the table reduced scaling for
-        precision near the table.In practice, the feature introduced additional tuning complexity without enough 
+        the blocks, we experimented with 1:1 movement scaling for motions high above the table and reduced scaling for
+        precision near the table. In practice, the feature introduced additional tuning complexity without enough 
         improvement in usability to justify it, so we removed it.
         <br/>
-        <b>(3) Stability Aids:</b> To help with cube alignment, we experimented with stability aids to lock
-        the horizontal movement when the gripper was above the cube. However, this resulted in jerky "locking"
-        action and would require more of an optimization-based blending approach to be smooth. We ended up
-        removing this feature as well because the green arrow visual guidance proved adequate for aiding in 
-        cube alignment.
+        <b>(3) Stability Aids:</b> To help with block alignment, we experimented with stability aids to lock
+        the horizontal movement when the gripper was above the block. However, this resulted in jerky "locking"
+        actions and would have required an optimization-based blending approach to be smooth. We ended up
+        removing this feature because the virtual green arrow proved adequate for aiding in 
+        block alignment.
         </p>
 
         <p>
-        After we recorded demonstrations, we removed those where we failed to stack the block within ~1 minute. 
-        However, we did keep demonstrations that showed recovery behavior, as long as we were still able to stack
-        the block within a reasonable amount of time.
+        After recording the demonstrations, we removed any trials in which we failed to stack the block within approximately one minute. 
+        However, we retained demonstrations that included recovery behavior, as long as the block was successfully 
+        stacked within the allotted time.
         </p>
 
       <div class="item has-text-centered">
@@ -399,11 +399,11 @@
 
         <h3 class="title is-4">Stage 3: Diffusion Policy Training</h3>
         <p>
-          We adapt the Diffusion Policy <a href="#ref-2">[2]</a> architecture from its original MuJoCo-based implementation to the Isaac Sim 
-          simulation platform. To accommodate the dexterous gripper, we expand the action space from the baseline to 
+          We adapted the Diffusion Policy <a href="#ref-2">[2]</a> architecture from its original MuJoCo-based implementation to the Isaac Sim 
+          simulation platform. To accommodate the dexterous gripper, we expanded the action space from the baseline to 
           18 dimensions, adding 12 degrees of freedom to capture the full articulation of the hand's fingers. 
-          The observation space consists of 19-dimensional low-level proprioceptive states, providing the policy 
-          with compact but informative sensory input. We retain the CNN-based U-Net denoising backbone from the 
+          The observation space consisted of 19-dimensional low-level proprioceptive states, providing the policy 
+          with compact but informative sensory input. We retained the CNN-based U-Net denoising backbone from the 
           original architecture, which iteratively refines noisy action sequences into coherent motor commands 
           through the diffusion process.
         </p>
@@ -425,31 +425,29 @@
         <div class="content has-text-justified">
           <p>
           We ran two different experiments. The first one was for initial testing of the model and the second one was a more
-          difficult task for testing the model robustness.
-          In the first experiment, the task was stacking a small blue block on top of a larger red one. Here the cubes were
-          spawned in the same place every time.
-          We were able to achieve success with 60 demonstrations, trained for 1100 epochs, with a training loss of 0.002.
+          difficult task for testing the model robustness. In the first experiment, the task was stacking a small blue block 
+          on top of a larger red one. Here the blocks were spawned in the same place every time.
+          We were able to achieve success with 60 demonstrations (trained for 1100 epochs with a training loss of 0.002).
           </p>
           
           <p>
-          In the second experiment, the task was to stack a uniform blue cube onto the same-sized red cube. The cube positions were randomly
-          initialized on the workspace (~40x40cm). However, with 103 demonstrations (trained for 1250 epochs with a 0.0002 loss), the model was 
-          still not able to stack the cube successfully,
-          which we infer is due to the model moving out of distribution due to the large workspace. Because of this, we opted to constrain 
-          the workspace to ~10x10cm and achieved success after 66 demonstrations, trained for 1400 epochs with a training loss of 0.001. We then
-          combined both the large and constrained workspace data for a total of 169 demonstrations, trained for 900 epochs at a 0.002 loss. We
-          used this checkpoint for our final evaluation below. We found that training further than a 0.002/0.001 loss caused too much overfitting
+          In the second experiment, the task was to stack a uniform blue block onto the same-sized red block. The block positions were randomly
+          initialized on the workspace table (~40x40cm). However, with 103 demonstrations (trained for 1250 epochs with a 0.0002 loss), the model was 
+          still not able to stack the block successfully. We infer that this is because the large workspace caused the model to operate 
+          outside its training distribution. Because of this, we opted to constrain 
+          the workspace to ~10x10cm and achieved success after 66 demonstrations (trained for 1400 epochs with a training loss of 0.001). We then
+          combined both the large and constrained workspace datasets for a total of 169 demonstrations (trained for 900 epochs with a 0.002 loss). We
+          used this checkpoint for our final evaluation below. We found that training further than a 0.001 loss caused overfitting
           which led to failure during evaluation. Our final training checkpoints are available 
           <a href="https://drive.google.com/drive/folders/1V7XG2Uscj1gLyu_sARw0agTFePV4tFPQ?usp=drive_link" target="_blank" rel="noopener noreferrer">here</a>.
           </p>
 
           <p>
           For our final evaluation in the second experiment, we ran 30 rollouts with inference at 10 HZ and used a 12-step action chunking.
-          We measured success as being able to stack the blue cube on the red cube without knocking it off within 1-minute.
+          We measured success as being able to stack the blue block on the red block without knocking it off within 1-minute.
           The diffusion model achieved a <b>63% success rate</b>. Note, that while the success rate appears fairly low, it is 
-          better than our own teleoperation success rate of about 53%. What makes this task difficult is aligning the blue cube so 
-          it does not fall off when placed on the red cube, as well as releasing the blue cube in a way that does not knock it over 
-          (since it is a similar width as the gripper).
+          better than our own teleoperation success rate of 53%. This task is challenging because the blue block must be aligned on the red block to avoid falling off. 
+          It must also be released carefully without being knocked over, since the block width is similar to that of the gripper.
           </p>
         </div>
 
@@ -528,7 +526,7 @@
             <li><strong>Observations</strong>: The policy presently relies on low-dimensional proprioceptive observations, which limits its applicability to real-world scenarios where object states cannot be directly measured; transitioning to image-based observations would enable more generalizable and deployment-ready perception.</li>
             <li><strong>Deployment</strong>: The system has only been validated in simulation, and bridging the sim-to-real gap to deploy on a physical robot remains a critical next step.</li>
             <li><strong>Hardware</strong>: The current single-arm setup constrains the complexity of manipulation tasks that can be performed, and extending the system to a bimanual coordination framework would substantially broaden its capabilities.</li> 
-            <li><strong>Task</strong>: The task scope is presently limited to relatively simple cube stacking; scaling to a more diverse repertoire of dexterous manipulation tasks — such as tool use, or container opening — will be essential for demonstrating the full potential of the approach.</li>
+            <li><strong>Task</strong>: The task scope is presently limited to relatively simple block stacking; scaling to a more diverse repertoire of dexterous manipulation tasks — such as tool use, or container opening — will be essential for demonstrating the full potential of the approach.</li>
           </ul>
           </div>
     </div>
