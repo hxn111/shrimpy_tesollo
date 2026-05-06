@@ -340,7 +340,7 @@
       </div>
 
       <div class="has-text-centered" style="margin-top: 0;">
-        <video autoplay muted loop controls style="width: 100%; height: 600px; object-fit: contain; display: block;">
+        <video autoplay muted loop controls style="width: 100%; object-fit: contain; display: block;">
           <source src="static/videos/hand_demo.mp4" type="video/mp4">
         </video>
         <div style="margin-top: 0.75rem; text-align: center;">
@@ -388,7 +388,7 @@
         </p>
 
       <div class="item has-text-centered">
-          <video autoplay muted loop controls style="width: 100%; height: 600px; object-fit: contain; display: block;">
+          <video autoplay muted loop controls style="width: 100%; object-fit: contain; display: block;">
             <source src="static/videos/teleoperation.mp4" type="video/mp4">
           </video>
           <div style="margin-top: 0.75rem; text-align: center;">
@@ -453,30 +453,60 @@
           </p>
         </div>
 
-        <h3 class="title is-4" style="margin-top: 1.5rem;">Experiment 1: Block Stacking, Fixed Location</h3>
-        <div style="width: 80%; margin: 1rem auto 0;">
-          <div class="item has-text-centered">
-            <video controls style="width: 100%; height: 400px; object-fit: contain; display: block;">
-              <source src="static/videos/study1_result_60_demonstrations_1100_epochs_0.002_loss.mp4" type="video/mp4">
-            </video>
-            <div style="margin-top: 0.75rem; text-align: center;">
-              <h2 class="subtitle" style="margin-bottom: 0.25rem;">Success (60 demonstrations)</h2>
-            </div>
-          </div>
-        </div>
-
-        <h3 class="title is-4" style="margin-top: 2.5rem;">Experiment 2: Block Stacking, Uniform Shape, Random Locations</h3>
-        <div style="width: 80%; margin: 1rem auto 0;">
-          <div class="item has-text-centered">
-            <video controls style="width: 100%; height: 400px; object-fit: contain; display: block;">
-              <source src="static/videos/huge_success.mp4" type="video/mp4">
-            </video>
-            <div style="margin-top: 0.75rem; text-align: center;">
-              <h2 class="subtitle" style="margin-bottom: 0.25rem;">Success (66 demonstrations with constrained block randomization)</h2>
-            </div>
+      <h3 class="title is-4" style="margin-top: 1.5rem;">Experiment 1: Block Stacking, Fixed Location</h3>
+      <div style="width: 80%; margin: 1rem auto 0;">
+        <div class="item has-text-centered">
+          <video controls style="width: 100%; height: 400px; object-fit: contain; display: block;">
+            <source src="static/videos/study1_result_60_demonstrations_1100_epochs_0.002_loss.mp4" type="video/mp4">
+          </video>
+          <div style="margin-top: 0.75rem; text-align: center;">
+            <h2 class="subtitle" style="margin-bottom: 0.25rem;">Success (60 demonstrations)</h2>
           </div>
         </div>
       </div>
+
+      <h3 class="title is-4" style="margin-top: 2.5rem;">Experiment 2: Block Stacking, Uniform Shape, Random Locations</h3>
+      <div style="width: 80%; margin: 1rem auto 0;">
+        <div class="item has-text-centered">
+          <video autoplay muted loop controls style="width: 100%; height: 400px; object-fit: contain; display: block;">
+            <source src="static/videos/huge_success.mp4" type="video/mp4">
+          </video>
+          <div style="margin-top: 0.75rem; text-align: center;">
+            <p style="margin: 0; font-weight: 600; font-size: 0.95rem;">Success (66 demonstrations with constrained block randomization)</p>
+          </div>
+<br/>
+          <video autoplay muted loop controls style="width: 100%; height: 400px; object-fit: contain; display: block;">
+            <source src="static/videos/uniform_cubes_169_demonstrations.mp4" type="video/mp4">
+          </video>
+          <div style="margin-top: 0.75rem; text-align: center;">
+            <p style="margin: 0; font-weight: 600; font-size: 0.95rem;">Checkpoint (169 combined demonstrations: 66 + 103 from Trial 2)</p>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="title is-5" style="margin-top: 2.5rem; text-align: center;">Some Failure Demos</h3>
+      <div class="columns is-centered" style="margin-top: 1rem;">
+        <div class="column">
+          <video autoplay muted loop controls style="width: 100%; object-fit: contain; display: block;">
+            <source src="static/videos/Study2_results_46_demonstrations_1000_epochs_0.002.mp4" type="video/mp4">
+          </video>
+          <p style="text-align: center; margin-top: 0.5rem; font-size: 0.875rem;">Trial 1: 46 demonstrations with unconstrained block randomization</p>
+        </div>
+        <div class="column">
+          <video autoplay muted loop controls style="width: 100%; object-fit: contain; display: block;">
+            <source src="static/videos/Study2_results_103_demonstrations_1250_epochs_0.002_loss.mp4" type="video/mp4">
+          </video>
+          <p style="text-align: center; margin-top: 0.5rem; font-size: 0.875rem;">Trial 2: 103 demonstrations with unconstrained block randomization</p>
+        </div>
+        <div class="column">
+          <video autoplay muted loop controls style="width: 100%; object-fit: contain; display: block;">
+            <source src="static/videos/tiny_slip.mp4" type="video/mp4">
+          </video>
+          <p style="text-align: center; margin-top: 0.5rem; font-size: 0.875rem;">There could be a tiny slip sometimes</p>
+        </div>
+      </div>
+    </div>
+
     </div>
   </div>
 </section>
