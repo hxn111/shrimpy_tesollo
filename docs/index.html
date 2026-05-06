@@ -283,15 +283,21 @@
 <section class="hero is-small">
   <div class="hero-body">
     <div class="container has-text-justified">
-
       <h2 class="title is-3 has-text-centered">Introduction</h2>
-
       <p>
-      TODO: Intro and research questions and related works
+      Diffusion policies have recently shown strong performance in visuomotor control, particularly in dexterous manipulation tasks. These methods enable robots to learn complex, multimodal behaviors directly from data, without requiring explicit modeling of system dynamics.
+
+      A common approach to collecting such data is through human teleoperation, which provides an intuitive and scalable way to generate demonstrations for robot learning. By allowing operators to directly control the robot, teleoperation captures rich task-relevant behaviors that can be used to train policies.
+
+      Our research questions are presented below:
       </p>
+      <p><strong>RQ1.</strong> How can we adapt a diffusion policy architecture to support the control of a bimanual robot system with 3-finger dexterous robot grippers?</p>
+      <p><strong>RQ2.</strong> How can we design a teleoperation system to collect high-quality dexterous demonstration data?</p>
+      
+      <!-- <p>For hand tracking and retargeting, we address the morphological mismatch between the 5-finger human hand and the 3-finger Tesollo DG-3F gripper by implementing a point-set distance optimization approach based on the DexRetargeting project. We use an RGBD d435 Realsense camera to localize the wrist pose and orientation, given the wrist keypoints from the hand tracking.</p>
 
-
-
+      <p>We adapt the Diffusion Policy architecture from its original MuJoCo-based implementation to the Isaac Sim simulation platform.</p>   -->
+    </div>
     </div>
   </div>
 </section>
