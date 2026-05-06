@@ -77,8 +77,8 @@ def _save_episode(obs_buf: list, act_buf: list, save_dir: Path) -> int:
 def _random_cube_poses(min_dist=0.1):
     """Sample non-overlapping random XY positions for both cubes."""
     while True:
-        p0 = np.array([np.random.uniform(-0.05, 0.2), np.random.uniform(-0.2, 0.13), 0.95])
-        p1 = np.array([np.random.uniform(-0.05, 0.2), np.random.uniform(-0.2, 0.13), 0.95])
+        p0 = np.array([np.random.uniform(-0.05, 0.05), np.random.uniform(0.0, 0.05), 0.95])
+        p1 = np.array([np.random.uniform(-0.05, 0.0), np.random.uniform(-0.05, 0.0), 0.95])
         if np.linalg.norm(p0[:2] - p1[:2]) >= min_dist:
             return list(p0) + [0, 0, 0, 1], list(p1) + [0, 0, 0, 1]
         # TODO: RANDOM ORIENTATION LATER

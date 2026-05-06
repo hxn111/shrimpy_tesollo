@@ -32,7 +32,7 @@ OmegaConf.register_new_resolver("eval", eval, replace=True)
 
 @click.command()
 @click.option('--input', '-i', required=True, help='Path to checkpoint')
-@click.option('--steps_per_inference', '-si', default=6, type=int, help="Action horizon for inference.")
+@click.option('--steps_per_inference', '-si', default=12, type=int, help="Action horizon for inference.")
 @click.option('--frequency', '-f', default=30, type=float, help="Control frequency in Hz.")  # Originally 10
 
 def main(input, 
@@ -199,7 +199,7 @@ def policy_loop(policy, device, robot_interface, n_obs_steps, steps_per_inferenc
 
                 print(f"Submitted {steps_per_inference} steps of actions.")
                 
-                RESET_TIME = 30.0
+                RESET_TIME = 60.0
                 if time.time() - episode_start >= RESET_TIME:
                     pose0, pose1 = _random_cube_poses()
                     robot_interface.move_object("cube",   pose0)
