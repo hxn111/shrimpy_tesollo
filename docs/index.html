@@ -352,7 +352,40 @@
 
       <div class="content has-text-justified" style="margin-top: 2rem;"> 
         <h3 class="title is-4">Stage 2: Teleoperation & Data Collection</h3>
-        <p>TODO</p>
+        <p>
+        We use the end-effector pose and gripper joint positions to teleoperate the robot in Isaacsim
+        in realtime. We found that placing the camera on the ground with the lense facing upwards tracked the
+        hand the best. The hand tracking model was sensitive to lighting and struggled when the hand was closed
+        due to shadows. To counteract this, we found the best lighting to teleoperate in was with on a cloudy day
+        with the overhead lights off and a phone flashlight facing up towards the hand.
+        </p>
+
+        <p>
+        We found teleoperation very challenging due to a lack of depth perception in simulation and a lack of 
+        tactile/force feedback. To address these challenges, we experimented with the following three teleoperation aids:
+        <br/>
+        <b>(1) Visual Guidance:</b> We added a virtual green arrow facing down robot gripper to help with operator
+        alignment to compensate for the depth-perception challenges. We also experimented with the lighting to adjust 
+        shadows. We found stronger shadows did not improve depth perception enough and instead obscured the workspace.
+        Instead removing shadows was the most helpful for teleoperation.
+        <br/>
+        <b>(2) Adaptive Motion Scaling:</b> To speed up teleoperation while allowing fine-grained movements close to
+        the cubes, we experimented with 1:1 movement scaling for motions high above the table reduced scaling for
+        precision near the table.In practice, the feature introduced additional tuning complexity without enough 
+        improvement in usability to justify it, so we removed it.
+        <br/>
+        <b>(3) Stability Aids:</b> To help with cube alignment, we experimented with stability aids to lock
+        the horizontal movement when the gripper was above the cube. However, this resulted in jerky "locking"
+        action and would require more of an optimization-based blending approach to be smooth. We ended up
+        removing this feature as well because the green arrow visual guidance proved adequate for aiding in 
+        cube alignment.
+        </p>
+
+        <p>
+        After we recorded demonstrations, we removed those where we failed to stack the block within ~1 minute. 
+        However, we did keep demonstrations that showed recovery behavior, as long as we were still able to stack
+        the block within a reasonable amount of time.
+        </p>
 
       <div class="item has-text-centered">
           <video autoplay muted loop controls style="width: 100%; height: 600px; object-fit: contain; display: block;">
@@ -365,7 +398,15 @@
         </div>
 
         <h3 class="title is-4">Stage 3: Diffusion Policy Training</h3>
-        <p>We adapt the Diffusion Policy architecture from its original MuJoCo-based implementation to the Isaac Sim simulation platform. To accommodate the dexterous gripper, we expand the action space from the baseline to 18 dimensions, adding 12 degrees of freedom to capture the full articulation of the hand's fingers. The observation space consists of 19-dimensional low-level proprioceptive states, providing the policy with compact but informative sensory input. We retain the CNN-based U-Net denoising backbone from the original architecture, which iteratively refines noisy action sequences into coherent motor commands through the diffusion process.</p>
+        <p>
+          We adapt the Diffusion Policy architecture from its original MuJoCo-based implementation to the Isaac Sim 
+          simulation platform. To accommodate the dexterous gripper, we expand the action space from the baseline to 
+          18 dimensions, adding 12 degrees of freedom to capture the full articulation of the hand's fingers. 
+          The observation space consists of 19-dimensional low-level proprioceptive states, providing the policy 
+          with compact but informative sensory input. We retain the CNN-based U-Net denoising backbone from the 
+          original architecture, which iteratively refines noisy action sequences into coherent motor commands 
+          through the diffusion process.
+        </p>
 
       </div>
     </div>
