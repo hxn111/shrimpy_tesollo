@@ -323,15 +323,19 @@
             in simulation and collect data of stacking blocks. This data is then used to train a low-dimension diffusion policy.
           </p>
 
-        <h3 class="title is-4">Stage 1: Finger & Wrist Tracking</h3>
-          <p>
-            To track the wrist and finger position, we use the MediaPipe Hand Tracking Dex Retargeting from the AnyTeleop Project [1].
-            We use a RGB-depth camera (Realsense d435) to localize the wrist relative to the camera frame using the depth data. The wrist pose
-            is scaled up linearly into the robot end-effector pose so that the robot can reach the entire workspace. We also add a One Euro Filter [3]
-            (a special type of low pass filter with reduced lag) to smooth the wrist data  since the tracking model is a bit jittery.
-            TODO: finger retargeting
-          </p>
-      </div>
+      <br/><br/><br/>
+      <h2 class="title is-4">Stage 1: Finger & Wrist Tracking</h2>
+
+      <p>
+        To track the wrist and finger position, we use the MediaPipe Hand Tracking Dex Retargeting from the AnyTeleop Project [1].
+        We use a RGB-depth camera (Realsense d435) to localize the wrist relative to the camera frame using the depth data. The wrist pose
+        is scaled up linearly into the robot end-effector pose so that the robot can reach the entire workspace. We also add a One Euro Filter [3]
+        (a special type of low pass filter with reduced lag) to smooth the wrist data  since the tracking model is a bit jittery.
+
+
+        TODO: finger retargeting
+
+      </p>
 
       <div id="data-collection-carousel" class="carousel results-carousel" style="margin-top: 1rem; width: 140%; margin-left: -20%; margin-right: -20%;">
         <div class="item has-text-centered">
