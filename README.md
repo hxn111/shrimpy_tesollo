@@ -1,4 +1,4 @@
-# shrimpy_tesollo
+# StackBot: Diffusion Pipeline for Stacking Blocks
 This repo contains the pipeline for training a diffusion model to stack blocks on the Franka Emika Panda robot arm with a Tesollo 3-Finger gripper in simulation. The pipelines allows you to collect data using your own hand to teleoperate the robot in simulation.
 
 ## Hardware Setup:
@@ -27,7 +27,7 @@ Run this on the specified computer to build and launch the docker container. The
 ```bash
 xhost +local: # Note: This isn't very secure but is th easiest way to do this
 sudo docker compose -f compose.isaac.yaml build
-sudo docker compose -f compose.isaac.yaml run --rm isaac-base  # Opens TERMINAL 1
+sudo docker compose -f compose.isaac.yaml run --rm isaac-base 
 
 # TODO: ADD THIS TO DOCKER:
 pip install OneEuroFilter pygame 
