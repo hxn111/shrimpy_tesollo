@@ -425,9 +425,9 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh  
         pip install colcon-common-extensions && \
         pip install -e /workspace/robot_motion && \
         pip install -e /workspace/robot_motion_interface && \
-        pip install -e /workspace/dex_retargeting && \
+        pip install -e /workspace/dex_retarget && \
         pip install backports.tarfile more-itertools && \
-        pip install -r /workspace/dex_retargeting/example/vector_retargeting/requirements.txt && \
+        pip install -r /workspace/dex_retarget/example/vector_retargeting/requirements.txt && \
         pip install numpy==1.26 && \
         /isaaclab/isaaclab.sh --install
 
