@@ -316,26 +316,26 @@
 
       <div class="content has-text-justified">
           <p>
-            Our Diffusion Policy pipeline includes three stages. The first being wrist and finger tracking which is 
-            retargeted into robot arm end-effector pose and gripper joint positions. This is used to teleoperate the robot
-            in simulation and collect data of stacking blocks. This data is then used to train a low-dimension diffusion policy.
+            Our Diffusion Policy pipeline includes three stages. First, wrist and finger movements are tracked and 
+            retargeted into robot end-effector pose and gripper joint positions. Second, these retargeted commands are used to teleoperate the robot
+            in simulation and block-stacking demonstrations. Third, the collected data is used to train a low-dimension diffusion policy.
           </p>
 
       <h2 class="title is-4">Stage 1: Finger & Wrist Retargeting</h2>
 
       <p>
-        To track the wrist and finger position, we use the MediaPipe Hand Tracking Dex Retargeting from the AnyTeleop Project <a href="#ref-1">[1]</a>.
-        We use a RGB-depth camera (Realsense d435) to localize the wrist relative to the camera frame using the depth data. The wrist pose
-        is scaled up linearly into the robot end-effector pose so that the robot can reach the entire workspace. We also add a One Euro Filter <a href="#ref-3">[3]</a>
-        (a special type of low pass filter with reduced lag) to smooth the wrist data  since the tracking model is a bit jittery.
+        To track the wrist and finger positions, we used the MediaPipe Hand Tracking and Dex Retargeting from the AnyTeleop Project <a href="#ref-1">[1]</a>.
+        We used a RGB-depth camera (Realsense d435) to localize the wrist relative to the camera frame using the depth data.The wrist pose is linearly scaled 
+        and mapped to the robot end-effector pose so that the robot can reach the entire workspace. We also applied a One Euro Filter <a href="#ref-3">[3]</a>,
+        a low-pass filter that reduces jitter while minimizing lag, to smooth the wrist-tracking data.
       </p>
 
       <p>
-        To retarget the finger tracking to gripper joint positions, we use Dex Retargeting optimizer. Since the Tesollo grippers have a differently
-        morphology compared to the human hand, in order to get the Dex Retargeting optimizer to work, we had to make two changes to the URDF.
-        These changes were discovered tediously through trial and error. (1) We had to to add a virtual wrist link that was closer to the margin-bottom
+        To retarget the finger tracking into gripper joint positions, we used the Dex Retargeting optimizer. Since the Tesollo grippers have a different morphology 
+        than the human hand, we had to make two changes to the URDF to get the Dex Retargeting optimizer to work.
+        (1) We had to to add a virtual wrist link that was closer to the margin-bottom
         "palm" of the gripper. (2) We had to add virtual finger tip links with adjusted orientation. The optimizer used these wrist and finger
-        links, along with a 1.8 scaling factor parameter to perform retargeting. 
+        links, along with a 1.8 scaling factor parameter to perform retargeting. These changes were discovered through a tedious trial and error process.
       </p>
       </div>
 
@@ -353,10 +353,10 @@
       <div class="content has-text-justified" style="margin-top: 2rem;"> 
         <h3 class="title is-4">Stage 2: Teleoperation & Data Collection</h3>
         <p>
-        We use the end-effector pose and gripper joint positions to teleoperate the robot in Isaacsim
+        We used the end-effector pose and gripper joint positions to teleoperate the robot in Isaacsim
         in realtime. We found that placing the camera on the ground with the lense facing upwards tracked the
         hand the best. The hand tracking model was sensitive to lighting and struggled when the hand was closed
-        due to shadows. To counteract this, we found the best lighting to teleoperate in was with on a cloudy day
+        due to shadows. To counteract this, we found the best lighting was during a cloudy day
         with the overhead lights off and a phone flashlight facing up towards the hand.
         </p>
 
@@ -542,8 +542,7 @@
 <!-- REFERENCES -->
 <section class="section">
   <div class="container is-max-desktop content">
-    <!-- <h2 class="title is-3 title-left">References</h2> -->
-    <h2 class="title is-3">References</h2>
+    <h2 class="title is-3  has-text-centered">References</h2>
     <p>Our implementation builds upon the following open-source repositories:</p>
     <div id="ref-1">[1] <a href="https://github.com/dexsuite/dex-retargeting" target="_blank">Dex_Retargeting</a></div>
     <div id="ref-2">[2] <a href="https://github.com/real-stanford/diffusion_policy" target="_blank">Diffusion_Policy</a></div>
